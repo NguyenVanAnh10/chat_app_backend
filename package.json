@@ -12,6 +12,7 @@
     "nodemon": "^2.0.7"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node index.js",
+    "dev": "node --inspect index.js "
   }
 }

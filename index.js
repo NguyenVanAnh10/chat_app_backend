@@ -33,6 +33,9 @@ io.on("connection", (socket) => {
   socket.on("answerCall", ({ to, signal }) => {
     io.to(to).emit("callAccepted", signal);
   });
+  socket.on("message", ({ message }) => {
+    socket.broadcast.emit("message", { message });
+  });
 });
 
 server.listen(PORT, () => console.log(`Server is running on ${PORT}`));

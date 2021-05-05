@@ -4,7 +4,7 @@ import Peer from "simple-peer";
 
 const SocketContext = createContext();
 
-const socket = io("https://chat-app-v.herokuapp.com");
+const socket = io(process.env.SERVER_API_BASE);
 
 const ContextProvider = ({ children }) => {
   const [stream, setStream] = useState(null);
