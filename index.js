@@ -1,41 +1,32 @@
-const app = require("express")();
-const server = require("http").createServer(app);
-const cors = require("cors");
+import cors from "cors";
+import express from "express";
+import http from "http";
+import bodyParser from "body-parser";
 
-const io = require("socket.io")(server, {
-  cors: {
-    origin: "*",
-    methods: ["GET", "POST"],
-  },
-});
-
-app.use(cors());
+import users from "./routes/users.js";
+import login from "./routes/login.js";
+import chatSocket from "./sockets/chat.js";
+import clientDB from "./model/index.js";
 
 const PORT = process.env.PORT || 5000;
+const app = express();
+const httpServer = http.createServer(app);
 
-app.get("/", (req, res) => {
-  res.send("Server is running, ");
-});
+chatSocket(httpServer);
+app.use(cors());
+app.use(bodyParser.json());
 
-io.on("connection", (socket) => {
-  socket.emit("me", socket.id);
-  socket.on("disconnect", () => {
-    socket.broadcast.emit("callended");
-  });
-  socket.on("callUser", ({ userToCall, signal, from, name }) => {
-    io.to(userToCall).emit("callUser", {
-      signal,
-      from,
-      name,
-    });
-  });
+app.use("/users", users);
+app.use("/login", login);
 
-  socket.on("answerCall", ({ to, signal }) => {
-    io.to(to).emit("callAccepted", signal);
-  });
-  socket.on("message", ({ message }) => {
-    socket.broadcast.emit("message", { message });
+process.on("SIGTERM", () => {
+  console.info("SIGTERM signal received.");
+  console.log("Closing http server.");
+  httpServer.close(async () => {
+    console.log("Http server closed.");
+    await clientDB.close();
+    process.exit(0);
   });
 });
 
-server.listen(PORT, () => console.log(`Server is running on ${PORT}`));
+httpServer.listen(PORT, () => console.log(`Server is running on ${PORT}`));

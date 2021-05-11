@@ -1,7 +1,10 @@
 {
   "dependencies": {
+    "body-parser": "^1.19.0",
     "cors": "^2.8.5",
+    "dotenv": "^9.0.2",
     "express": "^4.17.1",
+    "mongodb": "^3.6.6",
     "socket.io": "^4.0.1"
   },
   "name": "chat-app",
@@ -11,6 +14,7 @@
   "devDependencies": {
     "nodemon": "^2.0.7"
   },
+  "type": "module",
   "scripts": {
     "start": "node index.js",
     "dev": "node --inspect index.js "
