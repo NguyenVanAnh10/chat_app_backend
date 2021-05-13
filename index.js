@@ -5,8 +5,9 @@ import bodyParser from "body-parser";
 
 import users from "./routes/users.js";
 import login from "./routes/login.js";
+import register from "./routes/register.js";
 import chatSocket from "./sockets/chat.js";
-import clientDB from "./model/index.js";
+import db from "./models/index.js";
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -18,13 +19,14 @@ app.use(bodyParser.json());
 
 app.use("/users", users);
 app.use("/login", login);
+app.use("/register", register);
 
 process.on("SIGTERM", () => {
   console.info("SIGTERM signal received.");
   console.log("Closing http server.");
   httpServer.close(async () => {
     console.log("Http server closed.");
-    await clientDB.close();
+    await db.close();
     process.exit(0);
   });
 });
