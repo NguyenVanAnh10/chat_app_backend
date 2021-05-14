@@ -3,7 +3,6 @@ import { Router } from "express";
 import { generateToken, decodeToken } from "../ulties/token.js";
 import { sendTokenConfirmationEmail } from "../ulties/email.js";
 import { createUser, findUser, updateUser } from "../models/user.js";
-import { json } from "body-parser";
 
 const router = Router();
 
