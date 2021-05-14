@@ -9,7 +9,7 @@ import {
 
 export const postRegister = async (req, res) => {
   const { userName, password: plainTextPassword, email } = req.body;
-  const registerToken = generateToken(req.body);
+  const registerToken = generateToken({ userName, email });
 
   try {
     const cryptPassword = await generateCryptPassword(plainTextPassword);
@@ -28,9 +28,9 @@ export const postRegister = async (req, res) => {
 
 export const getRegister = async (req, res) => {
   const { token } = req.query;
-  const { userName, password, email } = decodeToken(token);
+  const { userName, email } = decodeToken(token);
   try {
-    const user = await updateUser({ userName, password, email });
+    const user = await updateUser({ userName, email });
     res.json({});
   } catch (e) {
     res
