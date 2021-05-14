@@ -8,6 +8,7 @@ import login from "./routes/login.js";
 import register from "./routes/register.js";
 import chatSocket from "./sockets/chat.js";
 import db from "./models/index.js";
+import initTransporterEmail from "./ulties/email.js";
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -16,6 +17,7 @@ const httpServer = http.createServer(app);
 app.use(cors());
 chatSocket(httpServer);
 app.use(bodyParser.json());
+initTransporterEmail();
 
 app.use("/users", users);
 app.use("/login", login);

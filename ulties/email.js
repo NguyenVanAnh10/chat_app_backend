@@ -2,24 +2,28 @@ import nodemailer from "nodemailer";
 
 import configs from "../configs/index.js";
 
-const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  pool: true,
-  port: 465,
-  secure: true,
-  auth: {
-    user: configs.USER_GMAIL,
-    pass: configs.PASS_GMAIL,
-  },
-});
+let transporter = null;
 
-transporter.verify(function (error, success) {
-  if (error) {
-    console.log(error);
-  } else {
-    console.log("Server is ready to take our messages");
-  }
-});
+const initTransporterEmail = () => {
+  transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    pool: true,
+    port: 465,
+    secure: true,
+    auth: {
+      user: configs.USER_GMAIL,
+      pass: configs.PASS_GMAIL,
+    },
+  });
+
+  transporter.verify(function (error, success) {
+    if (error) {
+      console.log(error);
+    } else {
+      console.log("Server is ready to take our messages");
+    }
+  });
+};
 
 export const sendTokenConfirmationEmail = (to, token) => {
   const mailOptions = {
@@ -36,3 +40,5 @@ export const sendTokenConfirmationEmail = (to, token) => {
     console.log("Message %s sent: %s", info.messageId, info.response);
   });
 };
+
+export default initTransporterEmail;

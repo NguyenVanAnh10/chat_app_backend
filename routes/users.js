@@ -1,12 +1,9 @@
 import { Router } from "express";
 
-import { getUsers } from "../models/user.js";
+import { getUsers } from "../controllers/user.js";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
-  const users = await getUsers();
-  res.json(users);
-});
+router.get("/", getUsers);
 
 export default router;
