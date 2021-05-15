@@ -1,6 +1,6 @@
 import { findUser } from "../models/user.js";
 import { compareCryptPassword, ExceptionError } from "../ulties/index.js";
-import { decodeToken } from "../ulties/token.js";
+import { decodeToken, generateToken } from "../ulties/token.js";
 
 export const postLogin = async (req, res) => {
   const { token } = req.body;
@@ -40,7 +40,10 @@ export const postLogin = async (req, res) => {
             msg: "Password is wrong",
           });
         }
-
+        const token_user = generateToken({
+          userId: account._id.toString(),
+        });
+        res.cookie("token_user", token_user);
         res.json(account);
       } catch (error) {
         res.status(401).json({ error });
@@ -48,3 +51,5 @@ export const postLogin = async (req, res) => {
       break;
   }
 };
+
+

@@ -2,10 +2,9 @@ import cors from "cors";
 import express from "express";
 import http from "http";
 import bodyParser from "body-parser";
+import cookieParser from "cookie-parser";
 
-import users from "./routes/users.js";
-import login from "./routes/login.js";
-import register from "./routes/register.js";
+import rootRoute from "./routes/root.js";
 import chatSocket from "./sockets/chat.js";
 import db from "./models/index.js";
 import initTransporterEmail from "./ulties/email.js";
@@ -17,11 +16,10 @@ const httpServer = http.createServer(app);
 app.use(cors());
 chatSocket(httpServer);
 app.use(bodyParser.json());
+app.use(cookieParser());
 initTransporterEmail();
 
-app.use("/users", users);
-app.use("/login", login);
-app.use("/register", register);
+app.use("/api/v1", rootRoute);
 
 process.on("SIGTERM", () => {
   console.info("SIGTERM signal received.");
