@@ -14,7 +14,7 @@ const UserModel = mongoose.model("User", userSchema);
 
 export const getUsers = async () => {
   const users = await UserModel.find();
-  return users.toArray();
+  return users.map((u) => u.toObject());
 };
 
 export const findUser = async (userData) => {
@@ -27,10 +27,7 @@ export const createUser = async (userData) => {
   return user;
 };
 
-export const updateUser = async (userData) => {
-  const user = await UserModel.updateOne(userData, {
-    isVerified: true,
-    registerToken: undefined,
-  });
+export const updateUser = async (queryUser, userData) => {
+  const user = await UserModel.updateOne(queryUser, userData);
   return user;
 };

@@ -30,7 +30,7 @@ export const sendTokenConfirmationEmail = (to, token) => {
     from: "luis.nguyen1110@gmail.com",
     to,
     subject: "Confirmation Email",
-    html: `<div><h1>hello</h1><strong>Please click below link to confirm email</strong><a href="https://chat-video.netlify.app/register?token=${token}">confirm</a></div>`,
+    html: `<div><h1>hello</h1><strong>Please click below link to confirm email</strong><a href="https://chat-video.netlify.app/login?token=${token}">confirm</a></div>`,
   };
 
   transporter.sendMail(mailOptions, (error, info) => {

@@ -1,11 +1,13 @@
 import { Router } from "express";
 
-import { postRegister, getRegister } from "../controllers/register.js";
+import {
+  postRegister,
+  postSetPasswordRegister,
+} from "../controllers/register.js";
 
 const router = Router();
 
 router.post("/", postRegister);
-
-router.get("/", getRegister);
+router.post("/set_password", postSetPasswordRegister);
 
 export default router;

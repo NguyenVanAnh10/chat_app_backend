@@ -1,25 +1,50 @@
 import { findUser } from "../models/user.js";
-import { compareCryptPassword } from "../ulties/index.js";
+import { compareCryptPassword, ExceptionError } from "../ulties/index.js";
+import { decodeToken } from "../ulties/token.js";
 
 export const postLogin = async (req, res) => {
-  const { user, password } = req.body;
-  try {
-    const account = await findUser({ userName: user });
-    if (!account) {
-      res.status(401).json({ error: { message: "User doesn't exist" } });
-    }
-    const checkPassword = await compareCryptPassword(
-      password,
-      account.password
-    );
-    if (!checkPassword) {
-      return res
-        .status(401)
-        .json({ error: { message: "Password is wrong, please try again" } });
-    }
+  const { token } = req.body;
+  switch (!!token) {
+    case true:
+      try {
+        const { userName, email } = await decodeToken(token);
+        const account = await findUser({ userName, email });
+        if (!account.registerToken) {
+          throw new ExceptionError({
+            name: "TokenError",
+            msg: "Token is expired",
+          });
+        }
+        res.json({});
+      } catch (error) {
+        res.status(400).json({ error });
+      }
+      break;
+    default:
+      const { userName, password } = req.body;
+      try {
+        const account = await findUser({ userName });
+        if (!account) {
+          throw new ExceptionError({
+            name: "AccountError",
+            msg: "User doesn't exist",
+          });
+        }
+        const checkPassword = await compareCryptPassword(
+          password,
+          account.password
+        );
+        if (!checkPassword) {
+          throw new ExceptionError({
+            name: "AccountError",
+            msg: "Password is wrong",
+          });
+        }
 
-    return res.json(account);
-  } catch (error) {
-    res.status(400).json(error);
+        res.json(account);
+      } catch (error) {
+        res.status(401).json({ error });
+      }
+      break;
   }
 };

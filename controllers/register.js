@@ -8,33 +8,37 @@ import {
 } from "../ulties/index.js";
 
 export const postRegister = async (req, res) => {
-  const { userName, password: plainTextPassword, email } = req.body;
+  const { userName, email } = req.body;
   const registerToken = generateToken({ userName, email });
 
   try {
-    const cryptPassword = await generateCryptPassword(plainTextPassword);
     const createdUser = await createUser({
       userName,
-      password: cryptPassword,
       email,
       registerToken,
     });
     sendTokenConfirmationEmail(email, registerToken);
     res.json(createdUser);
-  } catch (e) {
-    res.status(400).json(e);
+  } catch (error) {
+    res.status(400).json({ error });
   }
 };
 
-export const getRegister = async (req, res) => {
-  const { token } = req.query;
-  const { userName, email } = decodeToken(token);
+export const postSetPasswordRegister = async (req, res) => {
+  const { token, password } = req.body;
   try {
-    const user = await updateUser({ userName, email });
+    const { userName, email } = await decodeToken(token);
+    const cryptPassword = await generateCryptPassword(password);
+    await updateUser(
+      { userName, email },
+      {
+        isVerified: true,
+        registerToken: undefined,
+        password: cryptPassword,
+      }
+    );
     res.json({});
-  } catch (e) {
-    res
-      .status(400)
-      .json({ error: { message: "Something went wrong", error: e } });
+  } catch (error) {
+    res.status(400).json({ error });
   }
 };

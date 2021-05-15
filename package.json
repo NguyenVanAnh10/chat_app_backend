@@ -21,6 +21,6 @@
   "type": "module",
   "scripts": {
     "start": "node index.js",
-    "dev": "node --inspect index.js "
+    "dev": "npx nodemon --inspect index.js "
   }
 }
