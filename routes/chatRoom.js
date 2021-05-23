@@ -1,9 +1,10 @@
 import { Router } from "express";
 
-import { getChatRooms } from "../controllers/chatRoom.js";
+import { getChatRooms, getChatRoom } from "../controllers/chatRoom.js";
 
-const router = Router();
+const router = Router({ mergeParams: true });
 
-router.use("/", getChatRooms);
+router.route("/").get(getChatRooms);
+router.route("/:roomId").get(getChatRoom);
 
 export default router;

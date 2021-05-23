@@ -1,4 +1,5 @@
 import { Server } from "socket.io";
+import mongoose from "mongoose";
 
 import { createMessage } from "../models/message.js";
 import {
@@ -9,6 +10,7 @@ import {
 } from "../models/chat_room.js";
 import { updateUser } from "../models/user.js";
 
+const ObjectId = mongoose.Types.ObjectId;
 const CHAT_ROOM = "CHAT_ROOM";
 
 const chat = (httpServer) => {
@@ -33,25 +35,24 @@ const chat = (httpServer) => {
     socket.on("create_room_chat_one_to_one", async ({ fromUser, toUser }) => {
       try {
         const room = await findRoomWithUserIds([fromUser, toUser]);
-        let roomId = room[0]?._id?.toString();
+        let roomId = room[0]?._id.toString();
         if (!room.length) {
           const chatRoom = await createRoom({
-            creater: fromUser,
+            createrId: ObjectId(fromUser),
             createAt: Date.now(),
-            userIds: [fromUser, toUser],
+            userIds: [ObjectId(fromUser), ObjectId(toUser)],
           });
           await updateUser(
-            { _id: fromUser },
-            { $push: { chatroomIds: chatRoom._id.toString() } }
+            { _id: ObjectId(fromUser) },
+            { $push: { chatroomIds: chatRoom._id } }
           );
           await updateUser(
-            { _id: toUser },
-            { $push: { chatroomIds: chatRoom._id.toString() } }
+            { _id: ObjectId(toUser) },
+            { $push: { chatroomIds: chatRoom._id } }
           );
           roomId = chatRoom._id.toString();
         }
         socket.in(toUser).socketsJoin(roomId);
-        socket.to(toUser).emit("joined_room_success", { roomId });
         socket.join(roomId);
         socket.emit("create_room_chat_one_to_one_success", { roomId });
       } catch (e) {
@@ -60,23 +61,26 @@ const chat = (httpServer) => {
     });
 
     // MESSAGING
-    socket.on("send_message", async ({ roomId, message }) => {
-      try {
-        const msg = await createMessage({
-          sender: message.sender,
-          content: message.content,
-          createAt: Date.now(),
-        });
-        await updateRoom(
-          { _id: roomId },
-          { $push: { messageIds: msg._id.toString() } }
-        );
-        socket.to(roomId).emit("receive_message", { roomId });
-        socket.emit("send_message_success", { roomId });
-      } catch (e) {
-        socket.emit("error", { error: { e } });
-      }
-    });
+    // socket.on("send_message", async ({ roomId, message }) => {
+    //   try {
+    //     const msg = await createMessage({
+    //       sender: message.sender,
+    //       content: message.content,
+    //       createAt: Date.now(),
+    //     });
+    //     await updateRoom(
+    //       { _id: roomId },
+    //       { $push: { messageIds: msg._id.toString() } }
+    //     );
+    //     socket.to(roomId).emit("receive_message", { roomId });
+    //     socket.emit("send_message_success", {
+    //       roomId,
+    //       messageId: msg._id.toString(),
+    //     });
+    //   } catch (e) {
+    //     socket.emit("error", { error: { e } });
+    //   }
+    // });
 
     socket.on("callUser", ({ userToCall, signal, from, name }) => {
       io.to(CHAT_ROOM).emit("callUser", {
@@ -94,5 +98,6 @@ const chat = (httpServer) => {
       socket.broadcast.emit("callended");
     });
   });
+  return io;
 };
 export default chat;

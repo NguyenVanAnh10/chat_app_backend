@@ -12,10 +12,11 @@ import initTransporterEmail from "./ulties/email.js";
 const PORT = process.env.PORT || 5000;
 const app = express();
 const httpServer = http.createServer(app);
+const io = chatSocket(httpServer);
 
 app.use(cors());
-chatSocket(httpServer);
 app.use(bodyParser.json());
+app.set("socketio", io);
 app.use(cookieParser());
 initTransporterEmail();
 

@@ -7,11 +7,11 @@ const userSchema = new mongoose.Schema({
   password: String,
   email: String,
   registerToken: String,
-  chatroomIds: { type: Array, default: [] },
+  chatroomIds: [mongoose.Schema.Types.ObjectId],
   isVerified: { type: Boolean, default: false },
 });
 
-const UserModel = mongoose.model("User", userSchema);
+const UserModel = mongoose.model("user", userSchema);
 
 export const getUsers = async () => {
   const users = await UserModel.find();

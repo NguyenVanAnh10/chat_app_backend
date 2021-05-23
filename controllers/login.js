@@ -2,7 +2,7 @@ import { findUser } from "../models/user.js";
 import { compareCryptPassword, ExceptionError } from "../ulties/index.js";
 import { decodeToken, generateToken } from "../ulties/token.js";
 
-export const postLogin = async (req, res) => {
+export const postLogin = async (req, res, next) => {
   const { token } = req.body;
   switch (!!token) {
     case true:
@@ -44,12 +44,11 @@ export const postLogin = async (req, res) => {
           userId: account._id.toString(),
         });
         res.cookie("token_user", token_user);
+        delete account.password;
         res.json(account);
       } catch (error) {
-        res.status(401).json({ error });
+        res.status(401).send({ error });
       }
       break;
   }
 };
-
-
