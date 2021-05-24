@@ -12,20 +12,21 @@ const chatRoomSchema = new mongoose.Schema({
 
 const ChatRoomModel = mongoose.model("chat_room", chatRoomSchema);
 
-export const createRoom = (roomData) => {
-  return ChatRoomModel.create(roomData);
+export const createRoom = ({ createrId, userIds, name }) => {
+  return ChatRoomModel.create({
+    name,
+    createrId: ObjectId(createrId),
+    createAt: Date.now(),
+    userIds: userIds.sort().map((id) => ObjectId(id)),
+  });
 };
 export const findRoom = (roomData) => {
   return ChatRoomModel.findOne(roomData);
 };
 export const findRoomWithUserIds = (userIds = []) => {
-  const reverseUserIds = [...userIds];
   return ChatRoomModel.find({
     userIds: {
-      $in: [
-        userIds.map((u) => ObjectId(u)),
-        reverseUserIds.reverse().map((u) => ObjectId(u)),
-      ],
+      $in: [userIds.sort().map((u) => ObjectId(u))],
     },
   });
 };
@@ -53,10 +54,59 @@ export const findAllRoomsIncludeUser = (userId) => {
   //return ChatRoomModel.find({ userIds: { $eq: userId } });
 };
 export const findRoomIncludeUser = (roomId, userId) => {
-  return ChatRoomModel.findOne({
-    _id: ObjectId(roomId),
-    userIds: { $eq: ObjectId(userId) },
-  });
+  return ChatRoomModel.aggregate([
+    {
+      $match: {
+        $and: [
+          {
+            _id: ObjectId(roomId),
+          },
+          { userIds: { $eq: ObjectId(userId) } },
+        ],
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "userIds",
+        foreignField: "_id",
+        as: "members",
+      },
+    },
+    {
+      $project: {
+        "members.password": 0,
+        "members.chatroomIds": 0,
+        "members.isVerified": 0,
+        "members.registerToken": 0,
+      },
+    },
+  ]);
+};
+export const getRoomById = (roomId) => {
+  return ChatRoomModel.aggregate([
+    {
+      $match: {
+        _id: ObjectId(roomId),
+      },
+    },
+    {
+      $lookup: {
+        from: "users",
+        localField: "userIds",
+        foreignField: "_id",
+        as: "members",
+      },
+    },
+    {
+      $project: {
+        "members.password": 0,
+        "members.chatroomIds": 0,
+        "members.isVerified": 0,
+        "members.registerToken": 0,
+      },
+    },
+  ]);
 };
 export const updateRoom = (queries, roomData) => {
   return ChatRoomModel.updateOne(queries, roomData);
