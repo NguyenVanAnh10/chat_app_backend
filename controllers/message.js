@@ -1,4 +1,7 @@
 import mongoose from "mongoose";
+import streamifier from "streamifier";
+
+import { uploadFile } from "../google_driver/index.js";
 
 import {
   findRoom,
@@ -58,19 +61,43 @@ export const getMessage = async (req, res) => {
 
 export const postMessage = async (req, res) => {
   try {
-    const message = req.body;
-
-    const msg = await createMessage({ ...message, status: true });
-    const room = await findRoom({ _id: message.roomId });
+    const { roomId, base64Image, contentType, ...message } = req.body;
+    const room = await findRoom({ _id: roomId });
     if (!room) {
       throw new ExceptionError({
         name: "GetRoomError",
         msg: "roomId isn't exist",
       });
     }
+    let msg = {};
+    switch (contentType) {
+      case "image":
+        const uploadedImage = await uploadFile({
+          _id: roomId,
+          source: streamifier.createReadStream(
+            Buffer.from(base64Image, "base64")
+          ),
+        });
+        msg = await createMessage({
+          ...message,
+          roomId,
+          contentType,
+          content: `https://drive.google.com/uc?id=${uploadedImage.data.id}`,
+          status: true,
+        });
+        break;
+      default:
+        msg = await createMessage({
+          roomId,
+          contentType,
+          ...message,
+          status: true,
+        });
+        break;
+    }
 
     await insertMessageIntoRoom(
-      { _id: message.roomId },
+      { _id: roomId },
       { $push: { messageIds: msg._id.toString() } }
     );
     req.app

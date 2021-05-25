@@ -5,6 +5,7 @@ const ObjectId = mongoose.Types.ObjectId;
 const messageSchema = new mongoose.Schema({
   senderId: mongoose.Schema.Types.ObjectId,
   hadSeenMessageUsers: [mongoose.Schema.Types.ObjectId],
+  contentType: String, // text | image | video | other files 
   content: String,
   createAt: Date,
   roomId: mongoose.Schema.Types.ObjectId,
