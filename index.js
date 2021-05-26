@@ -23,7 +23,7 @@ app.use(cookieParser());
 initTransporterEmail();
 
 app.use("/api/v1", rootRoute);
-``;
+
 process.on("SIGTERM", () => {
   console.info("SIGTERM signal received.");
   console.log("Closing http server.");
