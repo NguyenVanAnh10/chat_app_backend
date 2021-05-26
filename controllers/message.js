@@ -104,8 +104,9 @@ export const postMessage = async (req, res) => {
       .get("socketio")
       .to(msg.roomId.toString())
       .emit("send_message_success", {
+        roomId: msg.roomId,
         senderId: msg.senderId,
-        messageId: msg._id.toString(),
+        messageId: msg._id,
       });
     res.json({ message: msg });
   } catch (error) {
