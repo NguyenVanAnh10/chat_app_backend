@@ -24,6 +24,9 @@ export const getUsers = (keyword) => {
     ],
   });
 };
+export const getUserId = (userId) => {
+  return UserModel.findOne({ _id: ObjectId(userId) });
+};
 
 export const findUser = (userData) => {
   return UserModel.findOne(userData);

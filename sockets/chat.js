@@ -31,12 +31,11 @@ const chat = (httpServer) => {
       }
     });
 
-    socket.on("call_to", ({ receiverId, signal, callerId, roomId }) => {
-      socket.to(roomId).emit("a_call_from", {
+    socket.on("call_to", ({ signal, id, roomId }) => {
+      io.to(roomId).emit("a_call_from", {
         roomId,
         signal,
-        receiverId,
-        callerId,
+        id,
       });
     });
 
