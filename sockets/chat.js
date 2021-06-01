@@ -42,9 +42,11 @@ const chat = (httpServer) => {
     socket.on("answer_call", ({ signal, roomId }) => {
       socket.to(roomId).emit("call_accepted", { signal });
     });
-
+    socket.on("callended", ({ userId, roomId }) => {
+      io.to(roomId).emit("callended", { userId });
+    });
     socket.on("disconnect", () => {
-      socket.broadcast.emit("callended");
+      socket.broadcast.emit("disconnect_socket");
     });
   });
   return io;
