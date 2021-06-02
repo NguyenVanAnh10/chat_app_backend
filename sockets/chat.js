@@ -42,6 +42,9 @@ const chat = (httpServer) => {
     socket.on("answer_call", ({ signal, roomId }) => {
       socket.to(roomId).emit("call_accepted", { signal });
     });
+    socket.on("decline_incoming_call", ({ callerId, roomId }) => {
+      io.to(roomId).emit("decline_incoming_call", { callerId });
+    });
     socket.on("callended", ({ userId, roomId }) => {
       io.to(roomId).emit("callended", { userId });
     });
