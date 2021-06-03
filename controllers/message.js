@@ -17,6 +17,8 @@ import {
   getMessagesByIds,
 } from "../models/message.js";
 import { ExceptionError } from "../ulties/index.js";
+import Message from "../entities/Message.js";
+import Notification from "../entities/Notification.js";
 
 export const getMessages = async (req, res) => {
   const { roomId, userId, haveSeenMessageIds } = req.query;
@@ -71,7 +73,7 @@ export const postMessage = async (req, res) => {
     }
     let msg = {};
     switch (contentType) {
-      case "image":
+      case Message.CONTENT_TYPE_IMAGE:
         const uploadedImage = await uploadFile({
           _id: roomId,
           source: streamifier.createReadStream(
@@ -79,9 +81,9 @@ export const postMessage = async (req, res) => {
           ),
         });
         msg = await createMessage({
-          ...message,
           roomId,
           contentType,
+          ...message,
           content: `https://drive.google.com/uc?id=${uploadedImage.data.id}`,
           status: true,
         });
