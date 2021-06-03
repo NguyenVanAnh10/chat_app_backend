@@ -32,17 +32,21 @@ async function authorize(credentials) {
   try {
     // Check if we have previously stored a token.
     const token = await readFile(TOKEN_PATH);
-    oAuth2Client.setCredentials(JSON.parse(token));
+    oAuth2Client.setCredentials(JSON.parse(token)?.tokens);
     return oAuth2Client;
   } catch (error) {
     return getAccessToken(oAuth2Client);
   }
 }
 function ask() {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
   return new Promise((resolve, reject) => {
     rl.question("Enter the code from that page here: ", (code) => {
       rl.close();
-      resolve(code);
+      resolve(decodeURIComponent(code));
     });
   });
 }
@@ -58,10 +62,7 @@ async function getAccessToken(oAuth2Client) {
     scope: SCOPES,
   });
   console.log("Authorize this app by visiting this url:", authUrl);
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
+
   try {
     const code = await ask();
     const token = await oAuth2Client.getToken(code);
