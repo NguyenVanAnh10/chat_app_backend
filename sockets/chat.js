@@ -43,13 +43,13 @@ const chat = (httpServer) => {
       socket.to(roomId).emit("call_accepted", { signal });
     });
     socket.on("decline_incoming_call", ({ callerId, roomId }) => {
-      io.to(roomId).emit("decline_incoming_call", { callerId });
+      io.to(roomId).emit("decline_incoming_call", { callerId, roomId });
     });
     socket.on("callended", ({ userId, roomId }) => {
       io.to(roomId).emit("callended", { userId });
     });
     socket.on("disconnect", () => {
-      socket.broadcast.emit("disconnect_socket");
+      socket.emit("disconnect_socket");
     });
   });
   return io;
