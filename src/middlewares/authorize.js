@@ -1,5 +1,5 @@
-import { ExceptionError } from "../ulties/index.js";
-import { decodeToken } from "../ulties/token.js";
+import { ExceptionError } from "ulties";
+import { decodeToken } from "../ulties/token";
 
 const authorize = async (req, res, next) => {
   const { token_user } = req.cookies;

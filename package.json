@@ -19,11 +19,19 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
-    "nodemon": "^2.0.7"
+    "@babel/core": "^7.14.3",
+    "@babel/plugin-transform-runtime": "^7.14.3",
+    "@babel/preset-env": "^7.14.4",
+    "babel-loader": "^8.2.2",
+    "babel-plugin-module-resolver": "^4.1.0",
+    "nodemon": "^2.0.7",
+    "webpack": "^5.38.1",
+    "webpack-cli": "^4.7.2",
+    "webpack-node-externals": "^3.0.0"
   },
-  "type": "module",
   "scripts": {
-    "start": "node index.js",
-    "dev": "npx nodemon --inspect index.js "
+    "start": "npx webpack --config webpack.config.js && node dist/index.js",
+    "dev": "npx nodemon --inspect dist/index.js",
+    "build": "npx webpack --config webpack.config.js"
   }
 }

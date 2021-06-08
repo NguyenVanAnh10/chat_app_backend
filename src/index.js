@@ -4,10 +4,10 @@ import http from "http";
 import bodyParser from "body-parser";
 import cookieParser from "cookie-parser";
 
-import rootRoute from "./routes/root.js";
-import chatSocket from "./sockets/chat.js";
-import db from "./models/index.js";
-import initTransporterEmail from "./ulties/email.js";
+import rootRoute from "routes/root";
+import chatSocket from "sockets/chat";
+import db from "models";
+import initTransporterEmail from "ulties/email";
 
 const PORT = process.env.PORT || 5000;
 const app = express();
