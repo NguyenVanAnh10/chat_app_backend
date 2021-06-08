@@ -1,13 +1,13 @@
 import { Router } from "express";
 
-import authorizeMiddleware from "../middlewares/authorize.js";
-import users from "../routes/users.js";
-import login from "../routes/login.js";
-import logout from "../routes/logout.js";
-import register from "../routes/register.js";
-import me from "../routes/me.js";
-import message from "../routes/message.js";
-import chatRoom from '../routes/chatRoom.js';
+import authorizeMiddleware from "middlewares/authorize";
+import users from "routes/users";
+import login from "routes/login";
+import logout from "routes/logout";
+import register from "routes/register";
+import me from "routes/me";
+import message from "routes/message";
+import chatRoom from "routes/chatRoom";
 
 const router = Router();
 

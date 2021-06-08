@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 
-import configs from "../configs/index.js";
+import configs from "configs";
 
 export function ExceptionError({ name, msg }) {
   this.message = msg;

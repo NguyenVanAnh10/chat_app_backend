@@ -1,7 +1,7 @@
 import mongoose from "mongoose";
 import streamifier from "streamifier";
 
-import { uploadFile } from "../google_driver/index.js";
+import { uploadFile } from "google_driver";
 
 import {
   findRoom,

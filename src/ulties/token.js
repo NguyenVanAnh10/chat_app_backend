@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 
-import configs from "../configs/index.js";
+import configs from "configs";
 import { ExceptionError } from "./index.js";
 
 export const generateToken = (data) => {

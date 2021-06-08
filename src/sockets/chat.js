@@ -1,14 +1,14 @@
 import { Server } from "socket.io";
 import mongoose from "mongoose";
 
-import { createMessage } from "../models/message.js";
+import { createMessage } from "models/message";
 import {
   createRoom,
   findRoomWithUserIds,
   updateRoom,
   findAllRoomsIncludeUser,
-} from "../models/chat_room.js";
-import { updateUser } from "../models/user.js";
+} from "models/chat_room";
+import { updateUser } from "models/user";
 
 const ObjectId = mongoose.Types.ObjectId;
 

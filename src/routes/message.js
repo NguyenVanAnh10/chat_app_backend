@@ -5,7 +5,7 @@ import {
   postMessage,
   getMessage,
   postUserHasSeenMessages,
-} from "../controllers/message.js";
+} from "controllers/message";
 
 const router = Router();
 

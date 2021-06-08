@@ -1,6 +1,6 @@
-import { findUser } from "../models/user.js";
-import { compareCryptPassword, ExceptionError } from "../ulties/index.js";
-import { decodeToken, generateToken } from "../ulties/token.js";
+import { findUser } from "models/user";
+import { compareCryptPassword, ExceptionError } from "ulties";
+import { decodeToken, generateToken } from "ulties/token";
 
 export const postLogin = async (req, res, next) => {
   const { token } = req.body;

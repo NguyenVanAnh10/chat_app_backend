@@ -4,8 +4,8 @@ import {
   findRoomWithUserIds,
   createRoom,
   getRoomById,
-} from "../models/chat_room.js";
-import { getUsers, updateUser, addRoomIdIntoUser } from "../models/user.js";
+} from "models/chat_room";
+import { getUsers, updateUser, addRoomIdIntoUser } from "models/user";
 
 export const getChatRooms = async (req, res) => {
   try {

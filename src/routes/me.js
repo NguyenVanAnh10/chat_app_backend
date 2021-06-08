@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { getMe } from "../controllers/me.js";
+import { getMe } from "controllers/me";
 
 const router = Router();
 

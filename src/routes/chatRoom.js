@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { getChatRooms, getChatRoom, postChatRoom } from "../controllers/chatRoom.js";
+import { getChatRooms, getChatRoom, postChatRoom } from "controllers/chatRoom";
 
 const router = Router({ mergeParams: true });
 

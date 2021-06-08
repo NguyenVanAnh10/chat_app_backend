@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import { postLogout } from "../controllers/logout.js";
+import { postLogout } from "controllers/logout";
 
 const router = Router();
 

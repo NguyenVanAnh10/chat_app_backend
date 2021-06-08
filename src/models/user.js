@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-import configs from "../configs/index.js";
+import configs from "configs";
 
 const { ObjectId } = mongoose.Types;
 

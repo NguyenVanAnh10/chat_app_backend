@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import configs from "../configs/index.js";
+import configs from "configs";
 
 mongoose.connect(configs.DB_LOCAL_HOST || configs.DB_HOST, {
   useNewUrlParser: true,

@@ -1,11 +1,8 @@
-import { generateToken, decodeToken } from "../ulties/token.js";
-import { sendTokenConfirmationEmail } from "../ulties/email.js";
-import { createUser, findUser, updateUser } from "../models/user.js";
-import configs from "../configs/index.js";
-import {
-  generateCryptPassword,
-  compareCryptPassword,
-} from "../ulties/index.js";
+import { generateToken, decodeToken } from "ulties/token";
+import { sendTokenConfirmationEmail } from "ulties/email";
+import { createUser, findUser, updateUser } from "models/user";
+import configs from "configs";
+import { generateCryptPassword, compareCryptPassword } from "ulties";
 
 export const postRegister = async (req, res) => {
   const { userName, email } = req.body;

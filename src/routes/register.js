@@ -1,9 +1,6 @@
 import { Router } from "express";
 
-import {
-  postRegister,
-  postSetPasswordRegister,
-} from "../controllers/register.js";
+import { postRegister, postSetPasswordRegister } from "controllers/register";
 
 const router = Router();
 

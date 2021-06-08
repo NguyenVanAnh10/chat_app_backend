@@ -1,4 +1,4 @@
-import { getUsers as getUsersModel, getUserId } from "../models/user.js";
+import { getUsers as getUsersModel, getUserId } from "models/user";
 
 export const getUsers = async (req, res) => {
   const { keyword } = req.query;

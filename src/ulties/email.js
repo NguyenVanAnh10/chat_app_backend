@@ -1,6 +1,6 @@
 import nodemailer from "nodemailer";
 
-import configs from "../configs/index.js";
+import configs from "configs";
 
 let transporter = null;
 

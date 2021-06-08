@@ -1,6 +1,6 @@
-import { findUser } from "../models/user.js";
-import { ExceptionError } from "../ulties/index.js";
-import { decodeToken } from "../ulties/token.js";
+import { findUser } from "models/user";
+import { ExceptionError } from "ulties";
+import { decodeToken } from "ulties/token";
 
 export const getMe = async (req, res) => {
   const { token_user } = req.cookies;
