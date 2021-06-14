@@ -1,17 +1,16 @@
-import bcrypt from "bcrypt";
+import bcrypt from 'bcrypt';
 
-import configs from "configs";
+import configs from 'configs';
 
 export function ExceptionError({ name, msg }) {
   this.message = msg;
   this.name = name;
 }
 
-export const generateCryptPassword = async (plainTextPassword) => {
+export const generateCryptPassword = async plainTextPassword => {
   const salt = await bcrypt.genSalt(Number(configs.SALT_ROUNDS) || 10);
-  return await bcrypt.hash(plainTextPassword, salt);
+  return bcrypt.hash(plainTextPassword, salt);
 };
 
-export const compareCryptPassword = async (plainTextPassword, hash) => {
-  return await bcrypt.compare(plainTextPassword, hash);
-};
+export const compareCryptPassword = (plainTextPassword,
+  hash) => bcrypt.compare(plainTextPassword, hash);

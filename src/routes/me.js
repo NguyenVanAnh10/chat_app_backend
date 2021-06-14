@@ -1,9 +1,9 @@
-import { Router } from "express";
+import { Router } from 'express';
 
-import { getMe } from "controllers/me";
+import getMe from 'controllers/me';
 
 const router = Router();
 
-router.get("/", getMe);
+router.get('/', getMe);
 
 export default router;

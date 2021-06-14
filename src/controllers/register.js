@@ -1,8 +1,7 @@
-import { generateToken, decodeToken } from "ulties/token";
-import { sendTokenConfirmationEmail } from "ulties/email";
-import { createUser, findUser, updateUser } from "models/user";
-import configs from "configs";
-import { generateCryptPassword, compareCryptPassword } from "ulties";
+import { generateToken, decodeToken } from 'ulties/token';
+import { sendTokenConfirmationEmail } from 'ulties/email';
+import { createUser, updateUser } from 'models/user';
+import { generateCryptPassword } from 'ulties';
 
 export const postRegister = async (req, res) => {
   const { userName, email } = req.body;
@@ -32,7 +31,7 @@ export const postSetPasswordRegister = async (req, res) => {
         isVerified: true,
         registerToken: undefined,
         password: cryptPassword,
-      }
+      },
     );
     res.json({});
   } catch (error) {

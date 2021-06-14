@@ -1,54 +1,55 @@
-import { findUser } from "models/user";
-import { compareCryptPassword, ExceptionError } from "ulties";
-import { decodeToken, generateToken } from "ulties/token";
+import { getAllInfoUser, getMeById, getUser } from 'models/user';
+import { compareCryptPassword, ExceptionError } from 'ulties';
+import { decodeToken, generateToken } from 'ulties/token';
 
-export const postLogin = async (req, res, next) => {
+const postLogin = async (req, res) => {
   const { token } = req.body;
   switch (!!token) {
     case true:
       try {
         const { userName, email } = await decodeToken(token);
-        const account = await findUser({ userName, email });
+        const account = await getUser({ userName, email });
         if (!account.registerToken) {
           throw new ExceptionError({
-            name: "TokenError",
-            msg: "Token is expired",
+            name: 'TokenError',
+            msg: 'Token is expired',
           });
         }
-        res.json({});
+        return res.json({});
       } catch (error) {
-        res.status(400).json({ error });
+        return res.status(400).json({ error });
       }
-      break;
     default:
       const { userName, password } = req.body;
       try {
-        const account = await findUser({ userName });
+        const account = await getAllInfoUser({ userName });
         if (!account) {
           throw new ExceptionError({
-            name: "AccountError",
+            name: 'AccountError',
             msg: "User doesn't exist",
           });
         }
         const checkPassword = await compareCryptPassword(
           password,
-          account.password
+          account.password,
         );
         if (!checkPassword) {
           throw new ExceptionError({
-            name: "AccountError",
-            msg: "Password is wrong",
+            name: 'AccountError',
+            msg: 'Password is wrong',
           });
         }
         const token_user = generateToken({
+          // eslint-disable-next-line no-underscore-dangle
           userId: account._id.toString(),
         });
-        res.cookie("token_user", token_user);
-        delete account.password;
-        res.json(account);
+        const me = await getMeById(account.id.toString());
+        res.cookie('token_user', token_user);
+        return res.json(me);
       } catch (error) {
-        res.status(401).send({ error });
+        return res.status(401).send({ error });
       }
-      break;
   }
 };
+
+export default postLogin;

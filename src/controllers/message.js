@@ -1,24 +1,21 @@
-import mongoose from "mongoose";
-import streamifier from "streamifier";
-
-import { uploadFile } from "google_driver";
+/* eslint-disable no-underscore-dangle */
+import streamifier from 'streamifier';
+import { uploadFile } from 'google_driver';
 
 import {
-  findRoom,
+  isExistRoom,
   updateRoom as insertMessageIntoRoom,
-} from "../models/chat_room.js";
+} from 'models/chat_room';
 import {
   getMessagesByRoomIdAndUserId,
   createMessage,
-  findMessages,
   getMessagesByUserId,
   getOneMessageByUserId,
   updateUserHasSeenMessagesInRoom,
   getMessagesByIds,
-} from "../models/message.js";
-import { ExceptionError } from "../ulties/index.js";
-import Message from "../entities/Message.js";
-import Notification from "../entities/Notification.js";
+} from 'models/message';
+import { ExceptionError } from 'ulties/index';
+import Message from 'entities/Message';
 
 export const getMessages = async (req, res) => {
   const { roomId, userId, haveSeenMessageIds } = req.query;
@@ -28,14 +25,14 @@ export const getMessages = async (req, res) => {
         if (haveSeenMessageIds) {
           const messagesByIds = await getMessagesByIds(
             roomId,
-            haveSeenMessageIds.split(",")
+            haveSeenMessageIds.split(','),
           );
           res.json(messagesByIds);
           return;
         }
         const messagesByRoomIdAndUserId = await getMessagesByRoomIdAndUserId(
           roomId,
-          userId
+          userId,
         );
         res.json(messagesByRoomIdAndUserId);
         return;
@@ -64,10 +61,10 @@ export const getMessage = async (req, res) => {
 export const postMessage = async (req, res) => {
   try {
     const { roomId, base64Image, contentType, ...message } = req.body;
-    const room = await findRoom({ _id: roomId });
+    const room = await isExistRoom({ _id: roomId });
     if (!room) {
       throw new ExceptionError({
-        name: "GetRoomError",
+        name: 'GetRoomError',
         msg: "roomId isn't exist",
       });
     }
@@ -77,7 +74,7 @@ export const postMessage = async (req, res) => {
         const uploadedImage = await uploadFile({
           _id: roomId,
           source: streamifier.createReadStream(
-            Buffer.from(base64Image, "base64")
+            Buffer.from(base64Image, 'base64'),
           ),
         });
         msg = await createMessage({
@@ -100,12 +97,12 @@ export const postMessage = async (req, res) => {
 
     await insertMessageIntoRoom(
       { _id: roomId },
-      { $push: { messageIds: msg._id.toString() } }
+      { $push: { messageIds: msg._id.toString() } },
     );
     req.app
-      .get("socketio")
+      .get('socketio')
       .to(msg.roomId.toString())
-      .emit("send_message_success", {
+      .emit('send_message_success', {
         roomId: msg.roomId,
         senderId: msg.senderId,
         messageId: msg._id,
@@ -121,15 +118,15 @@ export const postUserHasSeenMessages = async (req, res) => {
     const { roomId, userId } = req.body;
     const haveSeenMessageIds = await updateUserHasSeenMessagesInRoom(
       roomId,
-      userId
+      userId,
     );
     req.app
-      .get("socketio")
+      .get('socketio')
       .to(roomId)
-      .emit("user_has_seen_messages", {
+      .emit('user_has_seen_messages', {
         userId,
         roomId,
-        haveSeenMessageIds: haveSeenMessageIds.map((m) => m._id)?.join(","),
+        haveSeenMessageIds: haveSeenMessageIds.map(m => m._id)?.join(','),
       });
     res.json(haveSeenMessageIds);
   } catch (error) {
