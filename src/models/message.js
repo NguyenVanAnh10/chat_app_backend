@@ -11,15 +11,14 @@ const messageSchema = wrapBaseSchema(new mongoose.Schema({
   content: String,
   createAt: Date,
   roomId: mongoose.Schema.Types.ObjectId,
-  keyMsg: String,
   status: Boolean,
 }));
 
 const MessageModel = mongoose.model('Message', messageSchema);
 
-export const createMessage = messageData => MessageModel.create(messageData);
+export const createMessage = data => MessageModel.create(data);
 
-export const getMessagesByRoomIdAndUserId = async (roomId, userId) => {
+export const getMessagesByRoomId = async ({ roomId, userId, limit, skip }) => {
   const messages = await MessageModel.aggregate([
     {
       $lookup: {
@@ -38,6 +37,9 @@ export const getMessagesByRoomIdAndUserId = async (roomId, userId) => {
       },
     },
     { $unwind: '$room' },
+    { $sort: { createAt: -1 } },
+    { $skip: Number(skip) },
+    { $limit: Number(limit) },
   ]);
   return messages.map(doc => MessageModel.hydrate({
     ...doc,

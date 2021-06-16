@@ -1,4 +1,3 @@
-/* eslint-disable no-underscore-dangle */
 import streamifier from 'streamifier';
 import { uploadFile } from 'google_driver';
 
@@ -7,7 +6,7 @@ import {
   updateRoom as insertMessageIntoRoom,
 } from 'models/chat_room';
 import {
-  getMessagesByRoomIdAndUserId,
+  getMessagesByRoomId,
   createMessage,
   getMessagesByUserId,
   getOneMessageByUserId,
@@ -18,7 +17,9 @@ import { ExceptionError } from 'ulties/index';
 import Message from 'entities/Message';
 
 export const getMessages = async (req, res) => {
-  const { roomId, userId, haveSeenMessageIds } = req.query;
+  const {
+    roomId, userId, limit = 100, skip = 0, haveSeenMessageIds,
+  } = req.query;
   try {
     switch (!!roomId) {
       case true:
@@ -30,11 +31,12 @@ export const getMessages = async (req, res) => {
           res.json(messagesByIds);
           return;
         }
-        const messagesByRoomIdAndUserId = await getMessagesByRoomIdAndUserId(
+        res.json(await getMessagesByRoomId({
           roomId,
           userId,
-        );
-        res.json(messagesByRoomIdAndUserId);
+          limit,
+          skip,
+        }));
         return;
       default:
         const messagesByUserId = await getMessagesByUserId(userId);
@@ -42,6 +44,7 @@ export const getMessages = async (req, res) => {
         return;
     }
   } catch (error) {
+    console.error(error);
     res.status(400).json({ error });
   }
 };
@@ -71,6 +74,7 @@ export const postMessage = async (req, res) => {
     let msg = {};
     switch (contentType) {
       case Message.CONTENT_TYPE_IMAGE:
+        // eslint-disable-next-line no-case-declarations
         const uploadedImage = await uploadFile({
           _id: roomId,
           source: streamifier.createReadStream(
@@ -97,7 +101,7 @@ export const postMessage = async (req, res) => {
 
     await insertMessageIntoRoom(
       { _id: roomId },
-      { $push: { messageIds: msg._id.toString() } },
+      { $push: { messageIds: msg.id.toString() } },
     );
     req.app
       .get('socketio')
@@ -105,7 +109,7 @@ export const postMessage = async (req, res) => {
       .emit('send_message_success', {
         roomId: msg.roomId,
         senderId: msg.senderId,
-        messageId: msg._id,
+        messageId: msg.id,
       });
     res.json({ message: msg });
   } catch (error) {
@@ -126,7 +130,7 @@ export const postUserHasSeenMessages = async (req, res) => {
       .emit('user_has_seen_messages', {
         userId,
         roomId,
-        haveSeenMessageIds: haveSeenMessageIds.map(m => m._id)?.join(','),
+        haveSeenMessageIds: haveSeenMessageIds.map(m => m.id)?.join(','),
       });
     res.json(haveSeenMessageIds);
   } catch (error) {
