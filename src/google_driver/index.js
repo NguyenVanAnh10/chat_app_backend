@@ -3,21 +3,23 @@
 /* eslint-disable no-underscore-dangle */
 import fs from 'fs';
 import util from 'util';
-import { dirname } from 'path';
-import { fileURLToPath } from 'url';
+// import { dirname } from 'path';
+// import { fileURLToPath } from 'url';
 import readline from 'readline';
 import { google } from 'googleapis';
-// TODO __dirname __filename
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// TODO hiden token
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = dirname(__filename);
 const readFile = util.promisify(fs.readFile);
+console.log('__filename', __filename);
+console.log('__dirname', __dirname);
 
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // The file token.json stores the user's access and refresh tokens, and is
 // created automatically when the authorization flow completes for the first
 // time.
-const TOKEN_PATH = './token.json';
+const TOKEN_PATH = `${__dirname}/token.json`;
 
 /**
  * Create an OAuth2 client with the given credentials, and then execute the
@@ -96,7 +98,7 @@ const uploadFileCallback = (auth, file) => {
 // Load client secrets from a local file.
 // eslint-disable-next-line import/prefer-default-export
 export const uploadFile = async file => {
-  const content = await readFile('./credentials.json');
+  const content = await readFile(`${__dirname}/credentials.json`);
   const auth = await authorize(JSON.parse(content));
   const uploadFileResult = await uploadFileCallback(auth, file);
   return uploadFileResult;
