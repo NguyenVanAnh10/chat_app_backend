@@ -1,3 +1,5 @@
+/* eslint-disable no-use-before-define */
+/* eslint-disable no-console */
 /* eslint-disable no-underscore-dangle */
 import fs from 'fs';
 import util from 'util';
@@ -44,7 +46,7 @@ function ask() {
     input: process.stdin,
     output: process.stdout,
   });
-  return new Promise((resolve, reject) => {
+  return new Promise(resolve => {
     rl.question('Enter the code from that page here: ', code => {
       rl.close();
       resolve(decodeURIComponent(code));
@@ -57,64 +59,28 @@ function ask() {
  * @param {google.auth.OAuth2} oAuth2Client The OAuth2 client to get token for.
  * @param {getEventsCallback} callback The callback for the authorized client.
  */
-async function getAccessToken(oAuth2Client) {
+const getAccessToken = async oAuth2Client => {
   const authUrl = oAuth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: SCOPES,
+    approval_prompt: 'force',
   });
   console.log('Authorize this app by visiting this url:', authUrl);
 
-  try {
-    const code = await ask();
-    const token = await oAuth2Client.getToken(code);
-    oAuth2Client.setCredentials(token);
-    fs.writeFile(TOKEN_PATH, JSON.stringify(token), err => {
-      if (err) return console.error(err);
-      console.log('Token stored to', TOKEN_PATH);
-    });
-    return oAuth2Client;
-  } catch (error) {
-    console.error(error);
-  }
-}
-// Load client secrets from a local file.
-export const uploadFile = async file => {
-  try {
-    const content = await readFile(`${__dirname}/credentials.json`);
-    const auth = await authorize(JSON.parse(content));
-    return await uploadFileCallback(auth, file);
-  } catch (error) {
-    console.error(error);
-  }
+  const code = await ask();
+  const token = await oAuth2Client.getToken(code);
+  oAuth2Client.setCredentials(token);
+  fs.writeFile(TOKEN_PATH, JSON.stringify(token), err => {
+    if (err) return console.error(err);
+    console.log('Token stored to', TOKEN_PATH);
+  });
+  return oAuth2Client;
 };
-/**
- * Lists the names and IDs of up to 10 files.
- * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
- */
-function listFiles(auth) {
-  const drive = google.drive({ version: 'v3', auth });
-  drive.files.list(
-    {
-      pageSize: 10,
-      fields: 'nextPageToken, files(id, name)',
-    },
-    (err, res) => {
-      if (err) return console.log(`The API returned an error: ${err}`);
-      const { files } = res.data;
-      if (files.length) {
-        console.log('Files:');
-        files.map(file => console.log(`${file.name} (${file.id})`));
-      } else {
-        console.log('No files found.');
-      }
-    },
-  );
-}
 
-function uploadFileCallback(auth, file) {
+const uploadFileCallback = (auth, file) => {
   const drive = google.drive({ version: 'v3', auth });
   const fileMetadata = {
-    name: file._id,
+    name: file.id,
     parents: ['1fPKi6192EorG3abA9s1ieVyrMFYDchNt'],
   };
   const media = {
@@ -126,4 +92,36 @@ function uploadFileCallback(auth, file) {
     media,
     fields: 'id',
   });
-}
+};
+
+// Load client secrets from a local file.
+// eslint-disable-next-line import/prefer-default-export
+export const uploadFile = async file => {
+  const content = await readFile(`${__dirname}/credentials.json`);
+  const auth = await authorize(JSON.parse(content));
+  const uploadFileResult = await uploadFileCallback(auth, file);
+  return uploadFileResult;
+};
+/**
+ * Lists the names and IDs of up to 10 files.
+ * @param {google.auth.OAuth2} auth An authorized OAuth2 client.
+ */
+// function listFiles(auth) {
+//   const drive = google.drive({ version: 'v3', auth });
+//   drive.files.list(
+//     {
+//       pageSize: 10,
+//       fields: 'nextPageToken, files(id, name)',
+//     },
+//     (err, res) => {
+//       if (err) return console.log(`The API returned an error: ${err}`);
+//       const { files } = res.data;
+//       if (files.length) {
+//         console.log('Files:');
+//         files.map(file => console.log(`${file.name} (${file.id})`));
+//       } else {
+//         console.log('No files found.');
+//       }
+//     },
+//   );
+// }

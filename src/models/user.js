@@ -14,6 +14,7 @@ const userSchema = wrapBaseSchema(new mongoose.Schema({
   userName: String,
   password: String,
   email: String,
+  avatar: String,
   registerToken: String,
   chatroomIds: [mongoose.Schema.Types.ObjectId],
   friendIds: [mongoose.Schema.Types.ObjectId],
@@ -23,6 +24,10 @@ const userSchema = wrapBaseSchema(new mongoose.Schema({
 }));
 
 export const UserModel = mongoose.model('user', userSchema);
+
+export const isExistUser = id => UserModel.exists({
+  _id: ObjectId(id),
+});
 
 export const isFriend = ({ userId, friendId }) => UserModel.exists({
   $and: [
@@ -60,6 +65,12 @@ export const getAllInfoUser = userData => UserModel.findOne(userData);
 export const createUser = userData => UserModel.create(userData);
 
 export const updateUser = (queryUser, userData) => UserModel.updateOne(queryUser, userData);
+
+export const updateAvatar = ({ id, avatar }) => UserModel.findOneAndUpdate({
+  _id: ObjectId(id),
+}, {
+  avatar,
+}, { new: true });
 
 export const addRoomIdIntoUser = (userId, chatRoomId) => UserModel.updateOne(
   { _id: ObjectId(userId) },

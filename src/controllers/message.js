@@ -76,7 +76,7 @@ export const postMessage = async (req, res) => {
       case Message.CONTENT_TYPE_IMAGE:
         // eslint-disable-next-line no-case-declarations
         const uploadedImage = await uploadFile({
-          _id: roomId,
+          id: roomId,
           source: streamifier.createReadStream(
             Buffer.from(base64Image, 'base64'),
           ),
