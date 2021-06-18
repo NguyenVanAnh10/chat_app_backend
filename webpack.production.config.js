@@ -9,6 +9,7 @@ module.exports = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js',
   },
+  context: path.resolve(__dirname),
   target: 'node',
   externals: [nodeExternals()],
   devtool: false,
@@ -33,7 +34,7 @@ module.exports = {
     ],
   },
   node: {
-    __filename: false,
-    __dirname: false,
+    __filename: true,
+    __dirname: true,
   },
 };
