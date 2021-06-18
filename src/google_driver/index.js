@@ -93,7 +93,7 @@ const uploadFileCallback = (auth, file) => {
     fields: 'id',
   });
 };
-
+console.log('__dirname build', __dirname);
 // Load client secrets from a local file.
 // eslint-disable-next-line import/prefer-default-export
 export const uploadFile = async file => {
