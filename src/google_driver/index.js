@@ -97,6 +97,7 @@ const uploadFileCallback = (auth, file) => {
 // Load client secrets from a local file.
 // eslint-disable-next-line import/prefer-default-export
 export const uploadFile = async file => {
+  console.log('path', `${__dirname}/credentials.json`);
   const content = await readFile(`${__dirname}/credentials.json`);
   const auth = await authorize(JSON.parse(content));
   const uploadFileResult = await uploadFileCallback(auth, file);
