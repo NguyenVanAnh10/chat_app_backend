@@ -5,7 +5,6 @@ import { google } from 'googleapis';
 // TODO hiden token
 const readFile = util.promisify(fs.readFile);
 
-console.log('__dirname', __dirname);
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // The file token.json stores the user's access and refresh tokens, and is
