@@ -12,6 +12,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 const readFile = util.promisify(fs.readFile);
 
+console.log('__filename', __filename);
+console.log('__dirname', __dirname);
+
 // If modifying these scopes, delete token.json.
 const SCOPES = ['https://www.googleapis.com/auth/drive'];
 // The file token.json stores the user's access and refresh tokens, and is
