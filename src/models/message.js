@@ -6,7 +6,7 @@ const { ObjectId } = mongoose.Types;
 
 const messageSchema = wrapBaseSchema(new mongoose.Schema({
   senderId: mongoose.Schema.Types.ObjectId,
-  hadSeenMessageUsers: [mongoose.Schema.Types.ObjectId],
+  usersSeenMessage: [mongoose.Schema.Types.ObjectId],
   contentType: String, // text | image | video | other files
   content: String,
   createAt: Date,
@@ -117,7 +117,7 @@ export const updateUserHasSeenMessagesInRoom = async (roomId, userId) => {
     {
       $match: {
         roomId: ObjectId(roomId),
-        hadSeenMessageUsers: { $ne: ObjectId(userId) },
+        usersSeenMessage: { $ne: ObjectId(userId) },
       },
     },
     { $project: { _id: 1 } },
@@ -125,9 +125,9 @@ export const updateUserHasSeenMessagesInRoom = async (roomId, userId) => {
   await MessageModel.updateMany(
     {
       roomId: ObjectId(roomId),
-      hadSeenMessageUsers: { $ne: ObjectId(userId) },
+      usersSeenMessage: { $ne: ObjectId(userId) },
     },
-    { $push: { hadSeenMessageUsers: ObjectId(userId) } },
+    { $push: { usersSeenMessage: ObjectId(userId) } },
   );
   const seenMessages = await MessageModel.find({
     _id: { $in: seenMessageIds },
