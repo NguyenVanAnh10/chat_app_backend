@@ -70,7 +70,7 @@ export const updateAvatar = ({ id, avatar }) => UserModel.findOneAndUpdate({
   _id: ObjectId(id),
 }, {
   avatar,
-}, { new: true });
+}, { new: true, projection: User.HIDE_FIELDS_ME });
 
 export const addRoomIdIntoUser = (userId, chatRoomId) => UserModel.updateOne(
   { _id: ObjectId(userId) },
