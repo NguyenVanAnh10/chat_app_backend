@@ -40,6 +40,7 @@
   "scripts": {
     "start": "node dist/index.js",
     "dev": "npx webpack --config webpack.development.config.js && npx nodemon --inspect dist/index.js",
-    "start-dev": "npx nodemon --inspect dist/index.js"
+    "start-dev": "npx nodemon --inspect dist/index.js",
+    "build": "npx webpack --config webpack.production.config.js"
   }
 }
