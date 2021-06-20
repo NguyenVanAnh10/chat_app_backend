@@ -1,5 +1,6 @@
 import {
   getUsers as getUsersModel,
+  getFriends as getFriendsModel,
   getUserById,
   addFriend,
   addFriendRequest,
@@ -15,11 +16,26 @@ import Error from 'entities/Error';
 import { createRoom } from 'models/chat_room';
 
 export const getUsers = async (req, res) => {
-  const { keyword } = req.query;
+  const { keyword, userId } = req.query;
   try {
-    const users = await getUsersModel(keyword);
+    const users = await getUsersModel({ keyword, userId });
     res.json(users);
   } catch (error) {
+    res.status(400).json({ error });
+  }
+};
+
+export const getFriends = async (req, res) => {
+  const { userId } = req.params;
+  const { friendIds } = req.query;
+  try {
+    if (!friendIds || !userId) {
+      throw new ExceptionError(Error.getFriends());
+    }
+    const users = await getFriendsModel({ userId, friendIds });
+    res.json(users);
+  } catch (error) {
+    console.error(error);
     res.status(400).json({ error });
   }
 };
@@ -42,12 +58,12 @@ export const postAddFriend = async (req, res) => {
   try {
     const isSentFriendRequestCheck = await isSentFriendRequest({ userId, friendId });
     if (isSentFriendRequestCheck) {
-      throw new ExceptionError(Error.REQUEST_FRIEND);
+      throw new ExceptionError(Error.requestFriend());
     }
 
     const isFriendCheck = await isFriend({ userId, friendId });
     if (isFriendCheck) {
-      throw new ExceptionError(Error.REQUEST_FRIEND);
+      throw new ExceptionError(Error.requestFriend());
     }
     await addFriend(userId, { friendId, createAt: Date.now() });
     await addFriendRequest(friendId, { userId, createAt: Date.now() });
@@ -118,7 +134,7 @@ export const getFriendRequest = async (req, res) => {
   try {
     const friendRequest = await getFriendRequestModel({ friendId, userId });
     if (!friendRequest) {
-      throw new ExceptionError(Error.GET_REQUEST_FRIEND);
+      throw new ExceptionError(Error.getRequestFriend());
     }
     res.json(friendRequest);
   } catch (error) {

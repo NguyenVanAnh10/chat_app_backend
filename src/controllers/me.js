@@ -1,7 +1,7 @@
 import streamifier from 'streamifier';
 import { uploadFile } from 'google_driver';
 
-import { getMeById, isExistUser, updateAvatar } from 'models/user';
+import { getMeById, isExistUser, updateUser } from 'models/user';
 import { ExceptionError } from 'ulties';
 import { decodeToken } from 'ulties/token';
 
@@ -21,7 +21,7 @@ export const getMe = async (req, res) => {
 
 export const postMe = async (req, res) => {
   try {
-    const { id, base64AvatarImage } = req.body;
+    const { id, base64AvatarImage, ...rest } = req.body;
     const isExistMe = await isExistUser(id);
 
     if (!isExistMe) {
@@ -30,6 +30,7 @@ export const postMe = async (req, res) => {
         msg: "User isn't exist",
       });
     }
+    const data = rest || {};
     let uploadedImage;
     if (base64AvatarImage) {
       uploadedImage = await uploadFile({
@@ -38,10 +39,19 @@ export const postMe = async (req, res) => {
           Buffer.from(base64AvatarImage, 'base64'),
         ),
       });
+      data.avatar = `https://drive.google.com/uc?id=${uploadedImage.data.id}`;
     }
-    const me = await updateAvatar({
+    const me = await updateUser({
       id,
-      avatar: `https://drive.google.com/uc?id=${uploadedImage.data.id}`,
+      ...data,
+    });
+    me.friendIds?.forEach(friendId => {
+      req.app
+        .get('socketio')
+        .to(friendId.toString())
+        .emit('update_user', {
+          userId: id,
+        });
     });
 
     res.json(me);

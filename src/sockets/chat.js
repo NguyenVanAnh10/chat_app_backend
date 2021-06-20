@@ -40,7 +40,6 @@ const chat = httpServer => {
       io.to(roomId).emit('callended', { userId });
     });
     socket.on('disconnect', () => {
-      socket.emit('disconnect_socket');
     });
   });
   return io;

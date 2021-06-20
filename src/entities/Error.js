@@ -1,10 +1,14 @@
 export default class Error {
-    static REQUEST_FRIEND = {
+    static requestFriend = () => ({
       name: 'REQUEST_FRIEND',
       msg: 'Sent request friend or you became friends',
-    };
-    static GET_REQUEST_FRIEND = {
+    });
+    static getRequestFriend = () => ({
       name: 'GET_REQUEST_FRIEND',
       msg: 'Request friend not exist',
-    };
+    });
+    static getFriends = () => ({
+      name: 'GET_FRIENDS',
+      msg: 'Params is wrong',
+    });
 }

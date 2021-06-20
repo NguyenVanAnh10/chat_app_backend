@@ -26,7 +26,11 @@ export const getRoomWithUserIds = (userIds = []) => ChatRoomModel.find({
     $in: [userIds.sort().map(u => ObjectId(u))],
   },
 });
-export const getAllRoomsByUserId = async userId => {
+export const getAllRoomsByUserId = async userId => ChatRoomModel.find({
+  userIds: ObjectId(userId),
+});
+
+export const getAllRoomsByUserIdLookupUsers = async userId => {
   const rooms = await ChatRoomModel.aggregate([
     { $match: { userIds: ObjectId(userId) } },
     {

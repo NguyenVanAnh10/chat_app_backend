@@ -1,6 +1,6 @@
 import { generateToken, decodeToken } from 'ulties/token';
 import { sendTokenConfirmationEmail } from 'ulties/email';
-import { createUser, updateUser } from 'models/user';
+import { createUser, updateOneUserQueryByUsernameAndEmail } from 'models/user';
 import { generateCryptPassword } from 'ulties';
 
 export const postRegister = async (req, res) => {
@@ -25,7 +25,7 @@ export const postSetPasswordRegister = async (req, res) => {
   try {
     const { userName, email } = await decodeToken(token);
     const cryptPassword = await generateCryptPassword(password);
-    await updateUser(
+    await updateOneUserQueryByUsernameAndEmail(
       { userName, email },
       {
         isVerified: true,

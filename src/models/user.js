@@ -15,6 +15,7 @@ const userSchema = wrapBaseSchema(new mongoose.Schema({
   password: String,
   email: String,
   avatar: String,
+  online: { type: Boolean, default: false },
   registerToken: String,
   chatroomIds: [mongoose.Schema.Types.ObjectId],
   friendIds: [mongoose.Schema.Types.ObjectId],
@@ -41,15 +42,31 @@ export const isSentFriendRequest = ({ userId, friendId }) => UserModel.exists({
   ],
 });
 
-export const getUsers = keyword => {
-  if (!keyword) return UserModel.find();
+export const getUsers = ({ userId, keyword }) => {
+  if (!keyword) return UserModel.find({ _id: { $ne: ObjectId(userId) } });
   return UserModel.find({
-    $or: [
-      { userName: { $regex: keyword, $options: 'i' } },
-      { email: { $regex: keyword, $options: 'i' } },
+    $and: [
+      { _id: { $ne: ObjectId(userId) } },
+      {
+        $or: [
+          { userName: { $regex: keyword, $options: 'i' } },
+          { email: { $regex: keyword, $options: 'i' } },
+        ],
+      },
     ],
   });
 };
+
+export const getFriends = ({ userId, friendIds }) => Promise.all(friendIds.split(',')
+  .map(async friendId => {
+    const friend = await UserModel.findOne({
+      $and: [
+        { _id: ObjectId(friendId) },
+        { friendIds: ObjectId(userId) },
+      ],
+    }, User.HIDE_FIELDS_USER);
+    return friend;
+  }));
 
 export const getMeById = userId => UserModel.findOne({
   _id:
@@ -64,13 +81,12 @@ export const getAllInfoUser = userData => UserModel.findOne(userData);
 
 export const createUser = userData => UserModel.create(userData);
 
-export const updateUser = (queryUser, userData) => UserModel.updateOne(queryUser, userData);
+export const updateOneUserQueryByUsernameAndEmail = (queryUser,
+  userData) => UserModel.updateOne(queryUser, userData);
 
-export const updateAvatar = ({ id, avatar }) => UserModel.findOneAndUpdate({
+export const updateUser = ({ id, ...data }) => UserModel.findOneAndUpdate({
   _id: ObjectId(id),
-}, {
-  avatar,
-}, { new: true, projection: User.HIDE_FIELDS_ME });
+}, data, { new: true, projection: User.HIDE_FIELDS_ME });
 
 export const addRoomIdIntoUser = (userId, chatRoomId) => UserModel.updateOne(
   { _id: ObjectId(userId) },
