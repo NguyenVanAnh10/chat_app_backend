@@ -75,7 +75,7 @@ export const getMeById = userId => UserModel.findOne({
 export const getUserById = userId => UserModel.findOne({
   _id:
     ObjectId(userId),
-}, User.HIDE_FIELDS_ME);
+}, User.HIDE_FIELDS_USER);
 export const getUser = userData => UserModel.findOne(userData, User.HIDE_FIELDS_USER);
 export const getAllInfoUser = userData => UserModel.findOne(userData);
 
