@@ -21,6 +21,12 @@ export const createRoom = ({ createrId, userIds, name }) => ChatRoomModel.create
   userIds: userIds.sort().map(id => ObjectId(id)),
 });
 export const isExistRoom = roomData => ChatRoomModel.exists(roomData);
+export const isExistRoomWithUserIds = (userIds = []) => ChatRoomModel.exists({
+  userIds: {
+    $in: [userIds.sort().map(u => ObjectId(u))],
+  },
+});
+
 export const getRoomWithUserIds = (userIds = []) => ChatRoomModel.find({
   userIds: {
     $in: [userIds.sort().map(u => ObjectId(u))],

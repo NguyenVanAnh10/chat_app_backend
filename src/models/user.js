@@ -57,6 +57,14 @@ export const getUsers = ({ userId, keyword }) => {
   });
 };
 
+export const getUsersByUserIds = ({ userIds }) => Promise.all(userIds.split(',')
+  .map(async userId => {
+    const friend = await UserModel.findOne({
+      _id: ObjectId(userId),
+    }, User.HIDE_FIELDS_USER);
+    return friend;
+  }));
+
 export const getFriends = ({ userId, friendIds }) => Promise.all(friendIds.split(',')
   .map(async friendId => {
     const friend = await UserModel.findOne({

@@ -11,4 +11,12 @@ export default class Error {
       name: 'GET_FRIENDS',
       msg: 'Params is wrong',
     });
+    static createExistRoom = () => ({
+      name: 'CREATE_ROOM',
+      msg: 'Room is exist',
+    });
+    static createLessThreeMembersRoom = () => ({
+      name: 'CREATE_ROOM',
+      msg: 'Members must be greater than three',
+    });
 }

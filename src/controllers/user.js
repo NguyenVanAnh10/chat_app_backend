@@ -1,6 +1,7 @@
 import {
   getUsers as getUsersModel,
   getFriends as getFriendsModel,
+  getUsersByUserIds,
   getUserById,
   addFriend,
   addFriendRequest,
@@ -16,9 +17,15 @@ import Error from 'entities/Error';
 import { createRoom } from 'models/chat_room';
 
 export const getUsers = async (req, res) => {
-  const { keyword, userId } = req.query;
+  const { keyword, userId, userIds } = req.query;
   try {
-    const users = await getUsersModel({ keyword, userId });
+    let users;
+    if (keyword) {
+      users = await getUsersModel({ keyword, userId });
+    }
+    if (userIds) {
+      users = await getUsersByUserIds({ userIds });
+    }
     res.json(users);
   } catch (error) {
     res.status(400).json({ error });

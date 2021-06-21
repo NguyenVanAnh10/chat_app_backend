@@ -1,11 +1,12 @@
-/* eslint-disable no-underscore-dangle */
+import Error from 'entities/Error';
 import {
   getAllRoomsByUserId,
   getRoomByUserId,
-  getRoomWithUserIds,
+  isExistRoomWithUserIds,
   createRoom,
 } from 'models/chat_room';
 import { addRoomIdIntoUser } from 'models/user';
+import { ExceptionError } from 'ulties';
 
 export const getChatRooms = async (req, res) => {
   try {
@@ -29,31 +30,35 @@ export const getChatRoom = async (req, res) => {
 };
 
 export const postChatRoom = async (req, res) => {
-  const { userIds, createrId, name } = req.body;
+  const { userIds: userIdsString, createrId, name } = req.body;
   try {
-    const room = await getRoomWithUserIds(userIds);
-    if (!room.length) {
-      const createdRoom = await createRoom({
-        name,
-        createrId,
-        userIds,
-      });
-      for (let i = 0; i < userIds.length; i++) {
-        // eslint-disable-next-line no-await-in-loop
-        await addRoomIdIntoUser(userIds[i], createdRoom._id.toString());
-        req.app
-          .get('socketio')
-          .in(userIds[i])
-          .socketsJoin(createdRoom._id.toString());
-        req.app.get('socketio').to(userIds[i]).emit('user_has_added_new_room', {
-          createrId,
-          roomId: createdRoom._id.toString(),
-        });
-      }
-
-      return res.json(createdRoom);
+    const userIds = userIdsString.split(',');
+    if (userIds.length < 3) {
+      throw new ExceptionError(Error.createLessThreeMembersRoom());
     }
-    res.json(room[0]);
+    const isExistRoom = await isExistRoomWithUserIds(userIds);
+    if (isExistRoom) {
+      throw new ExceptionError(Error.createExistRoom());
+    }
+
+    const createdRoom = await createRoom({
+      name,
+      createrId,
+      userIds,
+    });
+    Promise.all(userIds.map(async u => {
+      await addRoomIdIntoUser(u, createdRoom.id.toString());
+      req.app
+        .get('socketio')
+        .in(u)
+        .socketsJoin(createdRoom.id.toString());
+      req.app.get('socketio').to(u).emit('user_has_added_new_room', {
+        createrId,
+        roomId: createdRoom.id.toString(),
+      });
+    }));
+
+    return res.json(createdRoom);
   } catch (error) {
     res.status(400).json({ error });
   }
