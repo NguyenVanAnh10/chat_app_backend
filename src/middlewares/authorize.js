@@ -1,11 +1,12 @@
-import { ExceptionError } from "ulties";
-import { decodeToken } from "ulties/token";
+import Error from 'entities/Error';
+import { ExceptionError } from 'ulties';
+import { decodeToken } from 'ulties/token';
 
 const authorize = async (req, res, next) => {
   const { token_user } = req.cookies;
   try {
     if (!token_user) {
-      throw new ExceptionError({ name: "TokenError", msg: "Invalid token" });
+      throw new ExceptionError(Error.invalidToken());
     }
     await decodeToken(token_user);
     next();

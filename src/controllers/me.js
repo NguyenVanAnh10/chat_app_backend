@@ -1,15 +1,16 @@
 import streamifier from 'streamifier';
 import { uploadFile } from 'google_driver';
 
-import { getMeById, isExistUser, updateUser } from 'models/user';
+import { getMeById, isExistUser, findOneAndUpdateUser } from 'models/user';
 import { ExceptionError } from 'ulties';
 import { decodeToken } from 'ulties/token';
+import Error from 'entities/Error';
 
 export const getMe = async (req, res) => {
   const { token_user } = req.cookies;
   try {
     if (!token_user) {
-      throw new ExceptionError({ name: 'TokenError', msg: 'Invalid token' });
+      throw new ExceptionError(Error.invalidToken());
     }
     const { userId } = await decodeToken(token_user);
     const me = await getMeById(userId);
@@ -22,7 +23,7 @@ export const getMe = async (req, res) => {
 export const postMe = async (req, res) => {
   try {
     const { id, base64AvatarImage, ...rest } = req.body;
-    const isExistMe = await isExistUser(id);
+    const isExistMe = await isExistUser({ id });
 
     if (!isExistMe) {
       throw new ExceptionError({
@@ -41,10 +42,7 @@ export const postMe = async (req, res) => {
       });
       data.avatar = `https://drive.google.com/uc?id=${uploadedImage.data.id}`;
     }
-    const me = await updateUser({
-      id,
-      ...data,
-    });
+    const me = await findOneAndUpdateUser({ id }, data);
     me.friendIds?.forEach(friendId => {
       req.app
         .get('socketio')

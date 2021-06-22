@@ -2,8 +2,8 @@ import bcrypt from 'bcrypt';
 
 import configs from 'configs';
 
-export function ExceptionError({ name, msg }) {
-  this.message = msg;
+export function ExceptionError({ name, message }) {
+  this.message = message;
   this.name = name;
 }
 

@@ -25,21 +25,15 @@ const initTransporterEmail = () => {
   });
 };
 
-export const sendTokenConfirmationEmail = (to, token) => {
+export const sendTokenConfirmationEmail = async (to, token) => {
   const mailOptions = {
     from: 'luis.nguyen1110@gmail.com',
     to,
     subject: 'Confirmation Email',
-    html: `<div><h1>hello</h1><strong>Please click below link to confirm email</strong><a href="https://chat-video.netlify.app/login?token=${token}">confirm</a></div>`,
+    html: `<div><h1>hello</h1><strong>Please click below link to confirm email</strong><a href="https://chat-video.netlify.app/login?registry_token=${token}">confirm</a></div>`,
   };
 
-  transporter.sendMail(mailOptions, (error, info) => {
-    if (error) {
-      console.log(error);
-      return;
-    }
-    console.log('Message %s sent: %s', info.messageId, info.response);
-  });
+  await transporter.sendMail(mailOptions);
 };
 
 export default initTransporterEmail;

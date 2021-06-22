@@ -111,7 +111,7 @@ export const findMessagesByUserId = (roomId, messageId) => MessageModel.findOne(
   roomId: ObjectId(roomId),
 });
 
-export const updateUserHasSeenMessagesInRoom = async (roomId, userId) => {
+export const findOneAndUpdateUserHasSeenMessagesInRoom = async (roomId, userId) => {
   // TODO
   const seenMessageIds = await MessageModel.aggregate([
     {

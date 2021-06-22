@@ -13,10 +13,8 @@ export const decodeToken = token => {
     configs.SECRET_KEY,
     (error, decoded) => {
       if (error) {
-        throw new ExceptionError({
-          name: 'TokenError',
-          msg: 'Invalid token or expired',
-        });
+        console.error(error);
+        throw new ExceptionError({ name: error.name, message: error.message });
       }
       return decoded;
     },

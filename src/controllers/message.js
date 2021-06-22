@@ -10,7 +10,7 @@ import {
   createMessage,
   getMessagesByUserId,
   getOneMessageByUserId,
-  updateUserHasSeenMessagesInRoom,
+  findOneAndUpdateUserHasSeenMessagesInRoom,
   getMessagesByIds,
 } from 'models/message';
 import { ExceptionError } from 'ulties/index';
@@ -120,7 +120,7 @@ export const postMessage = async (req, res) => {
 export const postUserHasSeenMessages = async (req, res) => {
   try {
     const { roomId, userId } = req.body;
-    const haveSeenMessageIds = await updateUserHasSeenMessagesInRoom(
+    const haveSeenMessageIds = await findOneAndUpdateUserHasSeenMessagesInRoom(
       roomId,
       userId,
     );

@@ -1,22 +1,42 @@
 export default class Error {
     static requestFriend = () => ({
       name: 'REQUEST_FRIEND',
-      msg: 'Sent request friend or you became friends',
+      message: 'Sent request friend or you became friends',
     });
     static getRequestFriend = () => ({
       name: 'GET_REQUEST_FRIEND',
-      msg: 'Request friend not exist',
+      message: 'Request friend not exist',
     });
     static getFriends = () => ({
       name: 'GET_FRIENDS',
-      msg: 'Params is wrong',
+      message: 'Params is wrong',
     });
     static createExistRoom = () => ({
       name: 'CREATE_ROOM',
-      msg: 'Room is exist',
+      message: 'Room already exists',
     });
     static createLessThreeMembersRoom = () => ({
       name: 'CREATE_ROOM',
-      msg: 'Members must be greater than three',
+      message: 'Members must be greater than three',
+    });
+    static invalidToken = () => ({
+      name: 'INVALID_TOKEN',
+      message: 'Invalid or expired token',
+    });
+    static getAccount = () => ({
+      name: 'GET_ACCOUNT',
+      message: 'Account does not exist',
+    });
+    static getPassword = () => ({
+      name: 'GET_PASSWORD',
+      message: 'Password is wrong',
+    });
+    static createAccount = () => ({
+      name: 'CREATE_ACCOUNT',
+      message: 'Account already exists',
+    });
+    static invalidateAccount = () => ({
+      name: 'INVALIDATE_ACCOUNT',
+      message: 'Invalidate Account',
     });
 }
