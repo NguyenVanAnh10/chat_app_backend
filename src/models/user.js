@@ -102,23 +102,29 @@ export const findOneAndUpdateUser = ({
 }, {
   frequentlyUsedIcon,
   ...data
-}) => UserModel.findOneAndUpdate(id ? {
-  _id: ObjectId(id),
-  ...rest,
-} : rest, frequentlyUsedIcon ? {
-  $push: {
-    frequentlyUsedIcons: {
-      $each: [frequentlyUsedIcon],
-      $slice: 20,
-      $position: 0,
-    },
-  },
-  ...data,
-} : data, {
-  new: true,
-  omitUndefined: true,
-  projection: User.HIDE_FIELDS_ME,
-});
+}) => {
+  if (frequentlyUsedIcon) {
+    rest.frequentlyUsedIcons = {
+      $ne: frequentlyUsedIcon,
+    };
+    data.$push = {
+      frequentlyUsedIcons: {
+        $each: [frequentlyUsedIcon],
+        $slice: 20,
+        $position: 0,
+      },
+    };
+  }
+
+  return UserModel.findOneAndUpdate(id ? {
+    _id: ObjectId(id),
+    ...rest,
+  } : rest, data, {
+    new: true,
+    omitUndefined: true,
+    projection: User.HIDE_FIELDS_ME,
+  });
+};
 
 export const addRoomIdIntoUser = (userId, chatRoomId) => UserModel.updateOne(
   { _id: ObjectId(userId) },
