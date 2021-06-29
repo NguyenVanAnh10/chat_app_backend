@@ -22,6 +22,7 @@ const userSchema = wrapBaseSchema(new mongoose.Schema({
   isVerified: { type: Boolean, default: false },
   friendRequests: [FriendSchema],
   addFriends: [FriendSchema],
+  frequentlyUsedIcons: [String],
 }));
 
 export const UserModel = mongoose.model('user', userSchema);
@@ -95,10 +96,29 @@ export const updateUser = ({ id, ...rest }, data) => UserModel.updateOne(id ? {
   ...rest,
 } : rest, data);
 
-export const findOneAndUpdateUser = ({ id, ...rest }, data) => UserModel.findOneAndUpdate(id ? {
+export const findOneAndUpdateUser = ({
+  id,
+  ...rest
+}, {
+  frequentlyUsedIcon,
+  ...data
+}) => UserModel.findOneAndUpdate(id ? {
   _id: ObjectId(id),
   ...rest,
-} : rest, data, { new: true, omitUndefined: true, projection: User.HIDE_FIELDS_ME });
+} : rest, frequentlyUsedIcon ? {
+  $push: {
+    frequentlyUsedIcons: {
+      $each: [frequentlyUsedIcon],
+      $slice: 20,
+      $position: 0,
+    },
+  },
+  ...data,
+} : data, {
+  new: true,
+  omitUndefined: true,
+  projection: User.HIDE_FIELDS_ME,
+});
 
 export const addRoomIdIntoUser = (userId, chatRoomId) => UserModel.updateOne(
   { _id: ObjectId(userId) },

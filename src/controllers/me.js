@@ -42,7 +42,13 @@ export const postMe = async (req, res) => {
       });
       data.avatar = `https://drive.google.com/uc?id=${uploadedImage.data.id}`;
     }
+
     const me = await findOneAndUpdateUser({ id }, data);
+    if (rest.frequentlyUsedIcon) {
+      res.json(me);
+      return;
+    }
+
     me.friendIds?.forEach(friendId => {
       req.app
         .get('socketio')
