@@ -1,5 +1,6 @@
-import streamifier from 'streamifier';
-import { uploadFile } from 'google_driver';
+/* eslint-disable no-case-declarations */
+import FileType from 'file-type';
+import { putFile } from 'awsS3';
 
 import {
   isExistRoom,
@@ -15,6 +16,7 @@ import {
 } from 'models/message';
 import { ExceptionError } from 'ulties/index';
 import Message from 'entities/Message';
+import Image from 'entities/Image';
 
 export const getMessages = async (req, res) => {
   const {
@@ -74,18 +76,21 @@ export const postMessage = async (req, res) => {
     let msg = {};
     switch (contentType) {
       case Message.CONTENT_TYPE_IMAGE:
-        // eslint-disable-next-line no-case-declarations
-        const uploadedImage = await uploadFile({
-          id: roomId,
-          source: streamifier.createReadStream(
-            Buffer.from(base64Image, 'base64'),
-          ),
+        const buffer = Buffer.from(base64Image, 'base64');
+        const { mime } = await FileType.fromBuffer(buffer);
+
+        const imageUrl = await putFile({
+          id: `${roomId}-${message.senderId}-${Date.now()}`,
+          content: buffer,
+          ContentEncoding: 'base64',
+          ContentType: mime,
+          imageType: Image.MESSAGE,
         });
         msg = await createMessage({
           roomId,
           contentType,
           ...message,
-          content: `https://drive.google.com/uc?id=${uploadedImage.data.id}`,
+          content: imageUrl,
           status: true,
         });
         break;

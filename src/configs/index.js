@@ -10,4 +10,6 @@ export default {
   USER_GMAIL: process.env.USER_GMAIL,
   PASS_GMAIL: process.env.PASS_GMAIL,
   SALT_ROUNDS: process.env.SALT_ROUNDS,
+  REGION: process.env.REGION,
+  BUCKET_NAME: process.env.BUCKET_NAME,
 };

@@ -1,10 +1,11 @@
-import streamifier from 'streamifier';
-import { uploadFile } from 'google_driver';
+import FileType from 'file-type';
 
+import { putFile } from 'awsS3';
 import { getMeById, isExistUser, findOneAndUpdateUser } from 'models/user';
 import { ExceptionError } from 'ulties';
 import { decodeToken } from 'ulties/token';
 import Error from 'entities/Error';
+import Image from 'entities/Image';
 
 export const getMe = async (req, res) => {
   const { token_user } = req.cookies;
@@ -32,15 +33,17 @@ export const postMe = async (req, res) => {
       });
     }
     const data = rest || {};
-    let uploadedImage;
+
     if (base64AvatarImage) {
-      uploadedImage = await uploadFile({
+      const buffer = Buffer.from(base64AvatarImage, 'base64');
+      const { mime } = await FileType.fromBuffer(buffer);
+      data.avatar = await putFile({
         id,
-        source: streamifier.createReadStream(
-          Buffer.from(base64AvatarImage, 'base64'),
-        ),
+        content: buffer,
+        ContentEncoding: 'base64',
+        ContentType: mime,
+        imageType: Image.AVATAR,
       });
-      data.avatar = `https://drive.google.com/uc?id=${uploadedImage.data.id}`;
     }
 
     const me = await findOneAndUpdateUser({ id }, data);
