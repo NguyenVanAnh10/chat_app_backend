@@ -1,6 +1,8 @@
 import nodemailer from 'nodemailer';
 
-import configs from 'configs';
+import { getImageUrl } from 'awsS3';
+import Image from 'entities/Image';
+import env from 'configs';
 
 let transporter = null;
 
@@ -11,8 +13,8 @@ const initTransporterEmail = () => {
     port: 465,
     secure: true,
     auth: {
-      user: configs.USER_GMAIL,
-      pass: configs.PASS_GMAIL,
+      user: env.USER_GMAIL,
+      pass: env.PASS_GMAIL,
     },
   });
 
@@ -26,14 +28,50 @@ const initTransporterEmail = () => {
 };
 
 export const sendTokenConfirmationEmail = async (to, token) => {
+  const logoURL = getImageUrl({ id: 'logo.png', imageType: Image.LOGO });
   const mailOptions = {
-    from: 'luis.nguyen1110@gmail.com',
     to,
-    subject: 'Confirmation Email',
-    html: `<div><h1>hello</h1><strong>Please click below link to confirm email</strong><a href="https://chat-video.netlify.app/login?registry_token=${token}">confirm</a></div>`,
+    subject: '[AloRice] Welcome! Please confirm your email address.',
+    html: `<div style="max-width: 500px;
+    border: 1px solid #cecbc9;
+    border-radius: 3px;
+    padding: 40px;">
+    <!--
+    <img style="width: 90px;
+    object-fit: cover;
+    max-height: 90px;
+    margin: 0 auto;
+    display: block;
+    border-radius: 3px;" alt="logo" src=${logoURL}/>
+    -->
+    <h1 style="    
+    line-height: 1.25;
+    font-size: 19px;
+    font-weight: 400!important;
+    color: #586069;
+    word-break: normal;
+    text-align: left;
+    margin: 30px 0 30px;
+    padding: 0;">Welcome to AloRice, <strong style="color: #24292e;">${to.replace(/@\w+.\w+/, '')}</strong>! <br/> To complete your AloRice 
+    sign up, we just need to confirm your email address:
+     <strong><a href="mailto:${to}" target="_blank">${to}</a></strong>.</h1>
+     <a style="
+      display: block;
+      text-decoration: none;
+      background: #198596;
+      width: 200px;
+      text-align: center;
+      color: white;
+      border-radius: 5px;
+      padding: 5px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-top: 20px;
+  " href="${env.CLIENT_HOST}/login?registry_token=${token}">Confirm email address</a>
+     </div>`,
   };
 
-  await transporter.sendMail(mailOptions);
+  transporter.sendMail(mailOptions);
 };
 
 export default initTransporterEmail;

@@ -33,6 +33,12 @@ export const getValidateRegisteredEmail = async (req, res) => {
   const { registryToken } = req.query;
   try {
     const { userName, email } = await decodeToken(registryToken);
+    const isExistAccount = await isExistUser({ userName, email });
+
+    if (!isExistAccount) {
+      throw new ExceptionError(Error.invalidToken());
+    }
+
     const isExistRegisteredAccount = await isExistUser({ userName, email, isVerified: true });
 
     if (isExistRegisteredAccount) {

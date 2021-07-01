@@ -8,6 +8,8 @@ const defaultParams = {
   Bucket: env.BUCKET_NAME,
 };
 
+export const getImageUrl = ({ id, folder = 'images', imageType }) => `${env.MEDIA_HOST}/${folder}/${imageType}s/${id}`;
+
 export const putFile = async ({
   id, content, folder = 'images', imageType, ...rest
 }) => {
@@ -19,6 +21,18 @@ export const putFile = async ({
   };
 
   await s3Client.send(new PutObjectCommand(params));
+  return getImageUrl({ id, folder, imageType });
+};
+
+export const getSignedUrlImage = ({
+  id,
+  folder = 'images',
+  imageType,
+}) => {
+  const params = {
+    ...defaultParams,
+    Key: folder ? `${folder}/${imageType}s/${id}` : `/${imageType}s/${id}`,
+  };
   const command = new GetObjectCommand(params);
   return getSignedUrl(s3Client, command, { expiresIn: 3600 });
 };

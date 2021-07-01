@@ -12,4 +12,6 @@ export default {
   SALT_ROUNDS: process.env.SALT_ROUNDS,
   REGION: process.env.REGION,
   BUCKET_NAME: process.env.BUCKET_NAME,
+  MEDIA_HOST: process.env.MEDIA_HOST,
+  CLIENT_HOST: process.env.CLIENT_HOST,
 };
