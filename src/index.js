@@ -4,10 +4,12 @@ import http from 'http';
 import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 
-import rootRoute from 'routes/root';
+import route from 'route';
 import chatSocket from 'sockets/chat';
 import db from 'models';
 import initTransporterEmail from 'ulties/email';
+
+console.log('process.env.NODE_ENV', process.env.NODE_ENV);
 
 const PORT = process.env.PORT || 5000;
 const app = express();
@@ -22,7 +24,7 @@ app.set('socketio', io);
 app.use(cookieParser());
 initTransporterEmail();
 
-app.use('/api/v1', rootRoute);
+app.use('/api/v1', route);
 
 process.on('SIGTERM', () => {
   console.info('SIGTERM signal received.');

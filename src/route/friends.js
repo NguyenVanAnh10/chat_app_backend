@@ -1,9 +1,9 @@
 import { Router } from 'express';
 
-import postLogout from 'controllers/logout';
+import getFriends from 'controllers/friends';
 
 const router = Router();
 
-router.post('/', postLogout);
+router.get('/', getFriends);
 
 export default router;

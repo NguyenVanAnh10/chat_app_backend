@@ -1,4 +1,4 @@
-export default class User {
+export default class Friend {
   constructor(user = {}) {
     // eslint-disable-next-line no-underscore-dangle
     this.id = user._id;
@@ -6,6 +6,5 @@ export default class User {
     this.email = user.email;
     this.avatar = user.avatar;
     this.online = user.online;
-    this.friendship = user.friendship;
   }
 }

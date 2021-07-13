@@ -1,6 +1,6 @@
 import { Server } from 'socket.io';
 
-import { getAllRoomsByUserId } from 'models/chat_room';
+import { ParticipantModel } from 'models/conversations';
 
 const chat = httpServer => {
   const io = new Server(httpServer, {
@@ -14,30 +14,29 @@ const chat = httpServer => {
     socket.on('join_all_room', async ({ userId }) => {
       socket.join(userId);
       try {
-        const roomsIncludeUser = await getAllRoomsByUserId(userId);
-        // eslint-disable-next-line no-underscore-dangle
-        roomsIncludeUser.map(r => socket.join(r._id.toString()));
+        (await ParticipantModel.find({ user: userId }))
+          .map(c => socket.join(c.conversation));
       } catch (error) {
         socket.emit('error', { error });
       }
     });
 
-    socket.on('call_to', ({ signal, id, roomId }) => {
-      io.to(roomId).emit('a_call_from', {
-        roomId,
+    socket.on('call_to', ({ signal, id, conversationId }) => {
+      io.to(conversationId).emit('a_call_from', {
+        conversationId,
         signal,
         id,
       });
     });
 
-    socket.on('answer_call', ({ signal, roomId }) => {
-      socket.to(roomId).emit('call_accepted', { signal });
+    socket.on('answer_call', ({ signal, conversationId }) => {
+      socket.to(conversationId).emit('call_accepted', { signal });
     });
-    socket.on('decline_incoming_call', ({ callerId, roomId }) => {
-      io.to(roomId).emit('decline_incoming_call', { callerId, roomId });
+    socket.on('decline_incoming_call', ({ callerId, conversationId }) => {
+      io.to(conversationId).emit('decline_incoming_call', { callerId, conversationId });
     });
-    socket.on('callended', ({ userId, roomId }) => {
-      io.to(roomId).emit('callended', { userId });
+    socket.on('callended', ({ userId, conversationId }) => {
+      io.to(conversationId).emit('callended', { userId });
     });
     socket.on('disconnect', () => {
     });
