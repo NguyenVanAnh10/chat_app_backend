@@ -8,8 +8,11 @@ import conversations from 'route/conversations';
 import friends from 'route/friends';
 import friendships from 'route/friendships';
 import {
-  postLogin, postLogout,
-  getValidateRegisteredEmail, postResetPassword,
+  postLogin,
+  postLogout,
+  putOnline,
+  postResetPassword,
+  getValidateRegisteredEmail,
 } from 'controllers/userServices';
 
 const router = Router();
@@ -18,6 +21,7 @@ router.post('/login', postLogin);
 router.post('/logout', postLogout);
 router.get('/validate_email', getValidateRegisteredEmail);
 router.post('/reset_password', postResetPassword);
+router.put('/online', authorizeMiddleware, putOnline);
 
 router.use('/me', authorizeMiddleware, me);
 router.use('/friends', authorizeMiddleware, friends);

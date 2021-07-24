@@ -11,7 +11,7 @@ const chat = httpServer => {
   });
 
   io.on('connection', socket => {
-    socket.on('join_all_room', async ({ userId }) => {
+    socket.on('join_all_conversations', async ({ userId }) => {
       socket.join(userId);
       try {
         (await ParticipantModel.find({ user: userId }))
@@ -21,22 +21,39 @@ const chat = httpServer => {
       }
     });
 
-    socket.on('call_to', ({ signal, id, conversationId }) => {
-      io.to(conversationId).emit('a_call_from', {
-        conversationId,
-        signal,
-        id,
-      });
+    socket.on('call_to', async ({
+      signal,
+      callerId,
+      conversationId,
+      addresseeIds = [],
+    }) => {
+      try {
+        let conversation = {};
+        if (!conversationId && addresseeIds.length) {
+          conversation = await ParticipantModel.createConversation({
+            meId: callerId,
+            userIds: [...addresseeIds],
+            socketIO: io,
+          });
+        }
+        socket.to(conversationId || conversation.id).emit('have_a_coming_call', {
+          conversationId: conversationId || conversation.id,
+          signal,
+          callerId,
+        });
+      } catch (error) {
+        socket.emit('error', { error });
+      }
     });
 
-    socket.on('answer_call', ({ signal, conversationId }) => {
-      socket.to(conversationId).emit('call_accepted', { signal });
+    socket.on('answer_the_call', ({ signal, conversationId }) => {
+      socket.to(conversationId).emit('accept_the_call', { signal });
     });
-    socket.on('decline_incoming_call', ({ callerId, conversationId }) => {
-      io.to(conversationId).emit('decline_incoming_call', { callerId, conversationId });
+    socket.on('decline_the_incoming_call', ({ callerId, conversationId }) => {
+      io.to(conversationId).emit('decline_the_incoming_call', { callerId, conversationId });
     });
-    socket.on('callended', ({ userId, conversationId }) => {
-      io.to(conversationId).emit('callended', { userId });
+    socket.on('end_call', ({ userId, conversationId }) => {
+      io.to(conversationId).emit('end_call', { userId });
     });
     socket.on('disconnect', () => {
     });

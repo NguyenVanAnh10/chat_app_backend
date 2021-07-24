@@ -40,21 +40,180 @@ participantSchema.statics.existsConversation = async function existsConversation
   return existed;
 };
 
-participantSchema.statics.findConversations = async function ({ meId, skip, limit }) {
-  const conversations = await Promise.all((await this.find({ user: meId })
-    .skip(Number.parseInt(skip, 10))
-    .limit(Number.parseInt(limit, 10)))
-    .map(async conversation => {
-      const { conversationRef } = await conversation.populate('conversationRef').execPopulate();
-      return conversationRef;
-    }));
+participantSchema.statics.findConversations = async function ({ meId }) {
+  const conversations = await this.aggregate([
+    {
+      $match: {
+        user: meId,
+      },
+    },
+    {
+      $lookup: {
+        from: 'participants',
+        localField: 'conversation',
+        foreignField: 'conversation',
+        as: 'participantsRef',
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'participantsRef.user',
+        foreignField: '_id',
+        as: 'members',
+      },
+    },
+    {
+      $lookup: {
+        from: 'conversations',
+        localField: 'conversation',
+        foreignField: '_id',
+        as: 'conversationRef',
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: { $mergeObjects: ['$$ROOT', { $arrayElemAt: ['$conversationRef', 0] }] },
+      },
+    },
+    {
+      $group: {
+        _id: '$user',
+        conversations: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $unwind: '$conversations',
+    },
+    {
+      $replaceWith: '$conversations',
+    },
+    {
+      $project: {
+        id: '$_id',
+        _id: 0,
+        name: '$name',
+        creator: '$creator',
+        createdAt: '$createdAt',
+        members: {
+          $map: {
+            input: '$members',
+            as: 'row',
+            in: {
+              id: '$$row._id',
+              userName: '$$row.userName',
+              email: '$$row.email',
+              online: '$$row.online',
+            },
+          },
+        },
+      },
+    },
+  ]);
   return conversations;
 };
 participantSchema.statics.findConversation = async function ({ meId, conversationId }) {
-  const conversation = await this.findOne({ user: meId, conversation: conversationId });
-  if (!conversation) return null;
-  const { conversationRef } = await conversation.populate('conversationRef').execPopulate();
-  return conversationRef;
+  const conversation = await this.aggregate([
+    {
+      $match: {
+        user: meId,
+        conversation: conversationId,
+      },
+    },
+    {
+      $lookup: {
+        from: 'participants',
+        localField: 'conversation',
+        foreignField: 'conversation',
+        as: 'participantsRef',
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'participantsRef.user',
+        foreignField: '_id',
+        as: 'members',
+      },
+    },
+    {
+      $lookup: {
+        from: 'conversations',
+        localField: 'conversation',
+        foreignField: '_id',
+        as: 'conversationRef',
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: { $mergeObjects: ['$$ROOT', { $arrayElemAt: ['$conversationRef', 0] }] },
+      },
+    },
+    {
+      $group: {
+        _id: '$user',
+        conversations: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $unwind: '$conversations',
+    },
+    {
+      $replaceWith: '$conversations',
+    },
+    {
+      $project: {
+        id: '$_id',
+        _id: 0,
+        name: '$name',
+        creator: '$creator',
+        createdAt: '$createdAt',
+        members: {
+          $map: {
+            input: '$members',
+            as: 'row',
+            in: {
+              id: '$$row._id',
+              userName: '$$row.userName',
+              email: '$$row.email',
+              online: '$$row.online',
+            },
+          },
+        },
+      },
+    },
+  ]);
+  return conversation[0] || {};
+};
+
+participantSchema.statics.createConversation = async function ({
+  meId,
+  name,
+  socketIO,
+  userIds = [],
+}) {
+  if (!userIds.length) throw Error.NO_PARAMS;
+
+  const existConversation = await this.existsConversation([meId, ...userIds]);
+  if (existConversation) throw Error.CONVERSATION_ALREADY_EXISTS;
+
+  const conv = await ConversationModel.create({ creator: meId, name });
+  await Promise.all([meId, ...userIds].map(async user => {
+    await this.create({ user, conversation: conv.id });
+    socketIO
+      .in(user)
+      .socketsJoin(conv.id);
+    return socketIO.to(user).emit('add_new_conversation', {
+      creatorId: meId,
+      conversationId: conv.id,
+    });
+  }));
+
+  const conversation = await this.findConversation({
+    meId,
+    conversationId: conv.id,
+  });
+  return conversation;
 };
 
 export const ParticipantModel = mongoose.model('participants', participantSchema);
@@ -88,4 +247,5 @@ conversationSchema.statics.updateConversation = async function ({ meId, conversa
   return conversation;
 };
 
-export default mongoose.model('conversations', conversationSchema);
+const ConversationModel = mongoose.model('conversations', conversationSchema);
+export default ConversationModel;

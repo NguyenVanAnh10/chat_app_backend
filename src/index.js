@@ -9,8 +9,6 @@ import chatSocket from 'sockets/chat';
 import db from 'models';
 import initTransporterEmail from 'ulties/email';
 
-console.log('process.env.NODE_ENV', process.env.NODE_ENV);
-
 const PORT = process.env.PORT || 5000;
 const app = express();
 const httpServer = http.createServer(app);

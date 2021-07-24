@@ -28,37 +28,23 @@ export const getConversation = async (req, res) => {
 };
 
 export const postConversation = async (req, res) => {
-  const { userIds: stringUserIds, name } = req.body;
+  const { userIds: usrIds, name } = req.body;
   const meId = req.app.get('meId');
 
   try {
-    if (!stringUserIds) throw Error.NO_PARAMS;
-    const userIds = stringUserIds.split(',').concat(meId);
+    if (!usrIds) throw Error.NO_PARAMS;
+    const userIds = usrIds.concat(meId);
 
     const existUsers = await UserModel.existsUsers(userIds);
     if (!existUsers) throw Error.USER_NOT_FOUND;
 
-    const existConversation = await ParticipantModel.existsConversation(userIds);
-
-    if (existConversation) throw Error.CONVERSATION_ALREADY_EXISTS;
-
-    const createdConversation = await ConversationModel.create({
+    const conversation = await ParticipantModel.createConversation({
+      meId,
       name,
-      creator: meId,
+      userIds,
+      socketIO: req.app.get('socketio'),
     });
-    await Promise.all(userIds.map(async user => {
-      await ParticipantModel.create({ user, conversation: createdConversation.id });
-      req.app
-        .get('socketio')
-        .in(user)
-        .socketsJoin(createdConversation.id);
-      return req.app.get('socketio').to(user).emit('user_has_added_new_room', {
-        creatorId: meId,
-        roomId: createdConversation.id,
-      });
-    }));
-
-    res.json(createdConversation);
+    res.json(conversation);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });

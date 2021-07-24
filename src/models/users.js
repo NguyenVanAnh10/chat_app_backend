@@ -29,6 +29,11 @@ const userSchema = schemaWrapper(new mongoose.Schema({
     ref: 'user_verifications',
     required: true,
   },
+  static: {
+    type: String,
+    ref: 'user_statics',
+    required: false,
+  },
   createdAt: Date,
 }));
 
@@ -88,7 +93,7 @@ userSchema.statics.findUser = async function findUser({
     {
       $lookup:
           {
-            from: 'friend_ships',
+            from: 'friendships',
             let: { userId: '$_id' },
             pipeline: [
               {
@@ -108,15 +113,23 @@ userSchema.statics.findUser = async function findUser({
                   },
                 },
               },
-              { $project: { status: 1, requester: 1, addressee: 1, _id: 0 } },
+              {
+                $project: {
+                  id: '$_id',
+                  status: '$status',
+                  requester: '$requester',
+                  addressee: '$addressee',
+                  _id: 0,
+                },
+              },
             ],
-            as: 'friend_ships',
+            as: 'friendships',
           },
     },
     {
       $replaceRoot: {
         newRoot: {
-          $mergeObjects: [{ friendship: { $arrayElemAt: ['$friend_ships', 0] } }, '$$ROOT'],
+          $mergeObjects: [{ friendship: { $arrayElemAt: ['$friendships', 0] } }, '$$ROOT'],
         },
       },
     },
@@ -127,7 +140,7 @@ userSchema.statics.findUser = async function findUser({
     },
     {
       $project: {
-        password: 0, friend_ships: 0, createdAt: 0, _id: 0, verification: 0, __v: 0,
+        password: 0, friendships: 0, createdAt: 0, _id: 0, verification: 0, __v: 0,
       },
     },
   ]))[0];
@@ -155,7 +168,7 @@ userSchema.statics.findUsers = async function findUsers({
     {
       $lookup:
           {
-            from: 'friend_ships',
+            from: 'friendships',
             let: { userId: '$_id' },
             pipeline: [
               {
@@ -175,15 +188,23 @@ userSchema.statics.findUsers = async function findUsers({
                   },
                 },
               },
-              { $project: { status: 1, requester: 1, addressee: 1, _id: 0 } },
+              {
+                $project: {
+                  _id: 0,
+                  id: '$_id',
+                  status: '$status',
+                  requester: '$requester',
+                  addressee: '$addressee',
+                },
+              },
             ],
-            as: 'friend_ships',
+            as: 'friendships',
           },
     },
     {
       $replaceRoot: {
         newRoot: {
-          $mergeObjects: [{ friendship: { $arrayElemAt: ['$friend_ships', 0] } }, '$$ROOT'],
+          $mergeObjects: [{ friendship: { $arrayElemAt: ['$friendships', 0] } }, '$$ROOT'],
         },
       },
     },
@@ -194,7 +215,7 @@ userSchema.statics.findUsers = async function findUsers({
     },
     {
       $project: {
-        password: 0, friend_ships: 0, createdAt: 0, _id: 0, verification: 0, __v: 0,
+        password: 0, friendships: 0, createdAt: 0, _id: 0, verification: 0, __v: 0,
       },
     },
     { $skip: Number.parseInt(skip, 10) },
@@ -209,5 +230,80 @@ userSchema.statics.existsUsers = async function existsUsers(userIds = []) {
   }))))).includes(false);
   return existed;
 };
+userSchema.statics.findMe = async function findMe(meId) {
+  const me = (await this.aggregate([
+    { $match: { _id: meId } },
+    {
+      $lookup: {
+        from: 'user_statics',
+        localField: 'static',
+        foreignField: '_id',
+        as: 'staticRef',
+      },
+    },
+    {
+      $addFields: {
+        statics: { $arrayElemAt: ['$staticRef', 0] },
+      },
+    },
+    {
+      $project: {
+        'statics._id': 0,
+        'statics.__v': 0,
+        'statics.user': 0,
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        userName: '$userName',
+        online: '$online',
+        avatar: '$avatar',
+        email: '$email',
+        createdAt: '$createdAt',
+        statics: '$statics',
+      },
+    },
 
-export default mongoose.model('users', userSchema);
+  ]))[0] || {};
+  return me;
+};
+
+const UserModel = mongoose.model('users', userSchema);
+
+const userStaticSchema = schemaWrapper(new mongoose.Schema({
+  _id: String,
+  user: {
+    type: String,
+    ref: 'user',
+    required: true,
+  },
+  icons: [String],
+}));
+
+userStaticSchema.statics.updateIcon = async function updateIcon({ meId, icon }) {
+  const existUserStatic = await this.exists({ user: meId });
+  if (!existUserStatic) {
+    const userStatic = await this.create({ user: meId, icons: [icon] });
+    await UserModel.findByIdAndUpdate(meId, { static: userStatic.id });
+    return userStatic;
+  }
+  const updatedUserStatic = await this.findOneAndUpdate(
+    { user: meId },
+    {
+      $push: {
+        icons: {
+          $each: [icon],
+          $slice: 20,
+          $position: 0,
+        },
+      },
+    },
+    { new: true },
+  );
+  return updatedUserStatic;
+};
+export const UserStaticModel = mongoose.model('user_statics', userStaticSchema);
+
+export default UserModel;

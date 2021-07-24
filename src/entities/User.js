@@ -7,5 +7,6 @@ export default class User {
     this.avatar = user.avatar;
     this.online = user.online;
     this.friendship = user.friendship;
+    this.static = user.static;
   }
 }

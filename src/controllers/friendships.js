@@ -1,20 +1,30 @@
 import Error from 'entities/Error';
-import FriendShipModel from 'models/friendships';
+import FriendshipModel from 'models/friendships';
 
 export const postFriendship = async (req, res) => {
   try {
-    const { userId, addresseeId } = req.body;
-    const existFriendship = await FriendShipModel.exists({
-      requester: userId,
+    const meId = req.app.get('meId');
+    const { addresseeId } = req.body;
+    const existFriendship = (await FriendshipModel.exists({
+      requester: meId,
       addressee: addresseeId,
-    });
+    })) || (await FriendshipModel.exists({
+      requester: addresseeId,
+      addressee: meId,
+    }));
     if (existFriendship) throw Error.FRIENDSHIP_ALREADY_EXISTS;
 
-    const friendShip = await FriendShipModel.create({
-      requester: userId,
+    const friendship = await FriendshipModel.create({
+      requester: meId,
       addressee: addresseeId,
     });
-    res.json(friendShip);
+    const friend = await FriendshipModel.getFriend({ friendId: addresseeId, meId });
+
+    req.app.get('socketio')
+      .to(addresseeId)
+      .emit('get_new_friend_request');
+
+    res.json(friend);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -24,16 +34,23 @@ export const postFriendship = async (req, res) => {
 export const putFriendship = async (req, res) => {
   try {
     const { status } = req.body;
-    const { friendShipId } = req.params;
-    const friendship = await FriendShipModel.findById(friendShipId);
+    const { friendshipId } = req.params;
+    const friendship = await FriendshipModel.findById(friendshipId);
+    const meId = req.app.get('meId');
 
     if (!friendship) throw Error.FRIENDSHIP_NO_EXIST;
     if (friendship.status === status) throw Error.FRIENDSHIP_UPDATED;
-
     friendship.status = status;
     await friendship.save();
 
-    res.json(friendship);
+    const friend = await FriendshipModel.getFriend({ friendshipId, meId });
+    if (status === 'ACCEPTED') {
+      req.app.get('socketio')
+        .to(friend.id)
+        .emit('accept_friend_request', { friendId: meId });
+    }
+
+    res.json(friend);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -42,10 +59,10 @@ export const putFriendship = async (req, res) => {
 
 export const deleteFriendship = async (req, res) => {
   try {
-    const { friendShipId } = req.params;
+    const { friendshipId } = req.params;
 
-    await FriendShipModel.deleteOne({
-      _id: friendShipId,
+    await FriendshipModel.deleteOne({
+      _id: friendshipId,
     });
 
     res.json({});
@@ -55,11 +72,11 @@ export const deleteFriendship = async (req, res) => {
   }
 };
 
-export const getFriendShipsIncoming = async (req, res) => {
+export const getFriendshipsIncoming = async (req, res) => {
   try {
     const meId = req.app.get('meId');
 
-    const friends = await FriendShipModel.findRequesters({ meId });
+    const friends = await FriendshipModel.findRequesters({ meId });
     res.json(friends);
   } catch (error) {
     console.error(error);
@@ -71,7 +88,7 @@ export const getFriendshipsOutgoing = async (req, res) => {
   try {
     const meId = req.app.get('meId');
 
-    const friends = await FriendShipModel.findAddressees({ meId });
+    const friends = await FriendshipModel.findAddressees({ meId });
     res.json(friends);
   } catch (error) {
     console.error(error);

@@ -88,18 +88,125 @@ messageSchema.statics.deleteAllMessagesOfConversation = async function (conversa
   });
 };
 
-messageSchema.statics.findMessage = async function findMessage({ meId, messageId }) {
-  const message = await this.findById(messageId);
-  if (!message) return null;
-  const { conversationRef } = await message.populate('conversationRef')
-    .execPopulate();
-  const existsUserInConversation = await ParticipantModel.exists({
-    // eslint-disable-next-line no-underscore-dangle
-    conversation: conversationRef._id,
-    user: meId,
-  });
-  if (!existsUserInConversation) throw Error.ACCESS_DENIED;
-  return message;
+messageSchema.statics.getMessageNumber = async function getMessageNumber({ meId, ...match }) {
+  const count = (await this.aggregate([
+    {
+      $lookup: {
+        from: 'conversations',
+        localField: 'conversation',
+        foreignField: '_id',
+        as: 'conversations',
+      },
+    },
+    {
+      $lookup: {
+        from: 'participants',
+        localField: 'conversations.0._id',
+        foreignField: 'conversation',
+        as: 'participants',
+      },
+    },
+    {
+      $lookup: {
+        from: 'user_seen_messages',
+        localField: '_id',
+        foreignField: 'message',
+        as: 'usersSeenMessage',
+      },
+    },
+    {
+      $addFields: {
+        usersSeen: {
+          $map: {
+            input: '$usersSeenMessage',
+            as: 'row',
+            in: '$$row.user',
+          },
+        },
+      },
+    },
+    {
+      $match: match,
+    },
+    {
+      $addFields: { meId },
+    },
+    {
+      $group: {
+        _id: '$meId',
+        total: { $count: {} },
+      },
+    },
+  ]))[0]?.total || 0;
+  return count;
+};
+
+messageSchema.statics.findMessage = async function findMessage({
+  meId,
+  messageId,
+  conversationId,
+}) {
+  const match = {
+    conversation: conversationId,
+    participants: { $elemMatch: { user: { $eq: meId } } },
+  };
+
+  if (!conversationId) throw Error.NO_PARAMS;
+  const total = await this.getMessageNumber({ meId, ...match });
+
+  const message = (await this.aggregate([
+    {
+      $lookup: {
+        from: 'conversations',
+        localField: 'conversation',
+        foreignField: '_id',
+        as: 'conversations',
+      },
+    },
+    {
+      $lookup: {
+        from: 'participants',
+        localField: 'conversations.0._id',
+        foreignField: 'conversation',
+        as: 'participants',
+      },
+    },
+    {
+      $match: { _id: messageId, ...match },
+    },
+    {
+      $lookup: {
+        from: 'user_seen_messages',
+        localField: '_id',
+        foreignField: 'message',
+        as: 'usersSeenDocument',
+      },
+    },
+    {
+      $addFields: {
+        usersSeen: {
+          $map: {
+            input: '$usersSeenDocument',
+            as: 'row',
+            in: '$$row.user',
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        sender: '$sender',
+        contentType: '$contentType',
+        conversation: '$conversation',
+        content: '$content',
+        usersSeen: '$usersSeen',
+        createdAt: '$createdAt',
+      },
+    },
+  ]))[0] || {};
+  return { message, total };
 };
 
 messageSchema.statics.deleteMessage = async function findMessage({ meId, messageId }) {
@@ -117,13 +224,20 @@ messageSchema.statics.deleteMessage = async function findMessage({ meId, message
   return message;
 };
 
+// TODO
 messageSchema.statics.findMessages = async function findMessages({
-  meId, skip = 0, limit = 100, conversationId,
-}) {
+  meId, skip = 0, limit = 100, conversationId, ...additionalMatch
+}, totalOpt = { conversation: false }) {
   const match = {
-    'participants.user': meId,
+    participants: { $elemMatch: { user: { $eq: meId } } },
+    ...additionalMatch,
   };
-  if (conversationId) match['conversations._id'] = conversationId;
+  if (conversationId) match.conversation = conversationId;
+  let totalMatch = { ...match, meId };
+  if (totalOpt.conversation && conversationId) {
+    totalMatch = { conversation: conversationId, meId };
+  }
+  const total = await this.getMessageNumber(totalMatch);
   const messages = await this.aggregate([
     {
       $lookup: {
@@ -142,24 +256,30 @@ messageSchema.statics.findMessages = async function findMessages({
       },
     },
     {
-      $match: match,
+      $lookup: {
+        from: 'user_seen_messages',
+        localField: '_id',
+        foreignField: 'message',
+        as: 'usersSeenMessage',
+      },
     },
     {
       $addFields: {
-        id: '$_id',
+        usersSeen: {
+          $map: {
+            input: '$usersSeenMessage',
+            as: 'row',
+            in: '$$row.user',
+          },
+        },
       },
+    },
+    {
+      $match: match,
     },
     {
       $sort: {
         createdAt: -1,
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        __v: 0,
-        conversations: 0,
-        participants: 0,
       },
     },
     {
@@ -168,145 +288,60 @@ messageSchema.statics.findMessages = async function findMessages({
     {
       $limit: Number.parseInt(limit, 10),
     },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        sender: '$sender',
+        contentType: '$contentType',
+        conversation: '$conversation',
+        content: '$content',
+        usersSeen: '$usersSeen',
+        createdAt: '$createdAt',
+      },
+    },
   ]);
-
-  return messages;
+  return { messages, total };
 };
 
 messageSchema.statics.findUnseenMessages = async function findUnseenMessages({
   meId, conversationId, skip = 0, limit = 100,
 }) {
   const match = {
-    'participants.user': meId,
     'usersSeenMessage.user': { $ne: meId },
     sender: { $ne: meId },
   };
-  if (conversationId) match['conversations._id'] = conversationId;
-  const messages = await this.aggregate([
-    {
-      $lookup: {
-        from: 'user_seen_messages',
-        localField: '_id',
-        foreignField: 'message',
-        as: 'usersSeenMessage',
-      },
-    },
-    {
-      $lookup: {
-        from: 'conversations',
-        localField: 'conversation',
-        foreignField: '_id',
-        as: 'conversations',
-      },
-    },
-    {
-      $lookup: {
-        from: 'participants',
-        localField: 'conversations.0._id',
-        foreignField: 'conversation',
-        as: 'participants',
-      },
-    },
-    {
-      $match: match,
-    },
-    {
-      $addFields: {
-        id: '$_id',
-      },
-    },
-    {
-      $sort: {
-        createdAt: -1,
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        __v: 0,
-        conversations: 0,
-        participants: 0,
-        usersSeenMessage: 0,
-      },
-    },
-    {
-      $skip: Number.parseInt(skip, 10),
-    },
-    {
-      $limit: Number.parseInt(limit, 10),
-    },
-  ]);
-
-  return messages;
+  const result = await this.findMessages({
+    meId, conversationId, skip, limit, ...match,
+  });
+  return result;
 };
 
 messageSchema.statics.findSeenMessages = async function findSeenMessages({
   meId, conversationId, skip = 0, limit = 100,
 }) {
   const match = {
-    'participants.user': meId,
-    'usersSeenMessage.user': meId,
+    usersSeenMessage: { $elemMatch: { user: { $eq: meId } } },
     sender: { $ne: meId },
   };
-  if (conversationId) match['conversations._id'] = conversationId;
-  const messages = await this.aggregate([
-    {
-      $lookup: {
-        from: 'user_seen_messages',
-        localField: '_id',
-        foreignField: 'message',
-        as: 'usersSeenMessage',
-      },
-    },
-    {
-      $lookup: {
-        from: 'conversations',
-        localField: 'conversation',
-        foreignField: '_id',
-        as: 'conversations',
-      },
-    },
-    {
-      $lookup: {
-        from: 'participants',
-        localField: 'conversations.0._id',
-        foreignField: 'conversation',
-        as: 'participants',
-      },
-    },
-    {
-      $match: match,
-    },
-    {
-      $addFields: {
-        id: '$_id',
-      },
-    },
-    {
-      $sort: {
-        createdAt: -1,
-      },
-    },
-    {
-      $project: {
-        _id: 0,
-        __v: 0,
-        conversations: 0,
-        participants: 0,
-        'usersSeenMessage._id': 0,
-        'usersSeenMessage.message': 0,
-        'usersSeenMessage.__v': 0,
-      },
-    },
-    {
-      $skip: Number.parseInt(skip, 10),
-    },
-    {
-      $limit: Number.parseInt(limit, 10),
-    },
-  ]);
+  const result = await this.findMessages({
+    meId, conversationId, skip, limit, ...match,
+  });
 
-  return messages;
+  return result;
+};
+
+messageSchema.statics.findMessagesByIds = async function findMessagesByIds({
+  meId, conversationId, skip = 0, limit = 1000, messageIds = [],
+}) {
+  const match = {
+    _id: { $in: messageIds },
+  };
+  const result = await this.findMessages({
+    meId, conversationId, skip, limit, ...match,
+  });
+
+  return result;
 };
 
 export default mongoose.model('messages', messageSchema);

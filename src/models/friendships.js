@@ -1,9 +1,7 @@
-import Friend from 'entities/Friend';
-import db from 'models';
 import mongoose from 'mongoose';
 import schemaWrapper from 'ulties/schema';
 
-const friendShipSchema = schemaWrapper(new mongoose.Schema({
+const friendshipSchema = schemaWrapper(new mongoose.Schema({
   _id: String,
   requester: {
     type: String,
@@ -17,61 +15,122 @@ const friendShipSchema = schemaWrapper(new mongoose.Schema({
     type: String,
     enum: ['REQUESTED', 'ACCEPTED', 'DECLINED'],
     default: 'REQUESTED',
+    required: true,
   },
   createdAt: Date,
 }));
 
-friendShipSchema.virtual('requesterRef', {
+friendshipSchema.virtual('requesterRef', {
   ref: 'users',
   localField: 'requester',
   foreignField: '_id',
   justOne: true,
 });
 
-friendShipSchema.virtual('addresseeRef', {
+friendshipSchema.virtual('addresseeRef', {
   ref: 'users',
   localField: 'addressee',
   foreignField: '_id',
   justOne: true,
 });
 
-friendShipSchema.statics.findAddressees = async function findAddressees({ meId }) {
-  const friendShipsOutgoing = await this.find({ requester: meId, status: 'REQUESTED' });
-  const friends = await Promise.all(friendShipsOutgoing.map(async friendShip => {
-    const friend = await friendShip.getAddressee(meId);
-    return new Friend(friend);
-  }));
-  return friends;
+friendshipSchema.statics.findAddressees = async function findAddressees({ meId }) {
+  const users = await this.aggregate([
+    {
+      $match: { requester: meId, status: 'REQUESTED' },
+    },
+    {
+      $addFields: { friendship: '$$ROOT' },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'requester',
+        foreignField: '_id',
+        as: 'userRef',
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: { $mergeObjects: ['$$ROOT', { $arrayElemAt: ['$userRef', 0] }] },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        userName: '$userName',
+        email: '$email',
+        avatar: '$avatar',
+        online: '$online',
+        'friendship.id': '$friendship._id',
+        'friendship.requester': '$friendship.requester',
+        'friendship.addressee': '$friendship.addressee',
+        'friendship.status': '$friendship.status',
+      },
+    },
+  ]);
+  return users;
 };
 
-friendShipSchema.statics.findRequesters = async function findRequesters({ meId }) {
-  const friendShipsIncoming = await this.find({ addressee: meId, status: 'REQUESTED' });
-  const friends = await Promise.all(friendShipsIncoming.map(async friendShip => {
-    const friend = await friendShip.getRequester(meId);
-    return new Friend(friend);
-  }));
-  return friends;
+friendshipSchema.statics.findRequesters = async function findRequesters({ meId }) {
+  const users = await this.aggregate([
+    {
+      $match: { addressee: meId, status: 'REQUESTED' },
+    },
+    {
+      $addFields: { friendship: '$$ROOT' },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'requester',
+        foreignField: '_id',
+        as: 'userRef',
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: { $mergeObjects: ['$$ROOT', { $arrayElemAt: ['$userRef', 0] }] },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        userName: '$userName',
+        email: '$email',
+        avatar: '$avatar',
+        online: '$online',
+        'friendship.id': '$friendship._id',
+        'friendship.requester': '$friendship.requester',
+        'friendship.addressee': '$friendship.addressee',
+        'friendship.status': '$friendship.status',
+      },
+    },
+  ]);
+  return users;
 };
 
-friendShipSchema.methods.getRequester = async function getRequester(meId) {
+friendshipSchema.methods.getRequester = async function getRequester(meId) {
   if (meId !== this.addressee) return null;
   const { requesterRef } = await this.populate('requesterRef').execPopulate();
   return requesterRef;
 };
 
-friendShipSchema.methods.getAddressee = async function getAddressee(meId) {
+friendshipSchema.methods.getAddressee = async function getAddressee(meId) {
   if (meId !== this.requester) return null;
   const { addresseeRef } = await this.populate('addresseeRef').execPopulate();
   return addresseeRef;
 };
 
-friendShipSchema.methods.getFriendId = function getFriendId(meId) {
+friendshipSchema.methods.getFriendId = function getFriendId(meId) {
   if (meId === this.requester) return this.addressee;
   if (meId === this.addressee) return this.requester;
   return null;
 };
 
-friendShipSchema.statics.getFriends = async function getFriends(meId) {
+friendshipSchema.statics.getFriends = async function getFriends(meId) {
   const friends = await this.aggregate([
     {
       $match: {
@@ -141,4 +200,82 @@ friendShipSchema.statics.getFriends = async function getFriends(meId) {
   return friends;
 };
 
-export default mongoose.model('friend_ships', friendShipSchema);
+friendshipSchema.statics.getFriend = async function getFriend({ friendId, meId, friendshipId }) {
+  let match = {};
+  if (friendId) {
+    match = {
+      $or: [
+        {
+          $and: [{
+            requester: { $eq: friendId },
+          }, {
+            addressee: { $eq: meId },
+          }],
+        },
+        {
+          $and: [{
+            requester: { $eq: meId },
+          }, {
+            addressee: { $eq: friendId },
+          }],
+        },
+      ],
+    };
+  }
+  if (friendshipId) {
+    match = { _id: friendshipId };
+  }
+
+  const friend = (await this.aggregate([
+    {
+      $match: match,
+    },
+    {
+      $addFields: {
+        friendship: '$$ROOT',
+        user: {
+          $cond:
+          { if: { $ne: ['$addressee', meId] }, then: '$addressee', else: '$requester' },
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'user',
+        foreignField: '_id',
+        as: 'userRef',
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: {
+          $mergeObjects: ['$$ROOT', { $arrayElemAt: ['$userRef', 0] }],
+        },
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        id: '$_id',
+        userName: '$userName',
+        email: '$email',
+        avatar: '$avatar',
+        online: '$online',
+        'friendship.id': '$friendship._id',
+        'friendship.requester': '$friendship.requester',
+        'friendship.addressee': '$friendship.addressee',
+        'friendship.status': '$friendship.status',
+      },
+    },
+  ]))[0] || {};
+  return friend;
+};
+
+friendshipSchema.statics.updateFriendship = async function (friendshipId, meId, data) {
+  await this.updateOne({ _id: friendshipId }, data);
+  const friend = await this.getFriend({ friendshipId, meId });
+  return friend;
+};
+
+export default mongoose.model('friendships', friendshipSchema);

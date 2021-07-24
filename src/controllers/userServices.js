@@ -1,6 +1,39 @@
 import UserModel, { UserVerificationModel } from 'models/users';
+import FriendshipModel from 'models/friendships';
+
 import Error from 'entities/Error';
 import User from 'entities/User';
+
+export const putOnline = async (req, res) => {
+  try {
+    const meId = req.app.get('meId');
+
+    const data = req.body;
+    const existMe = await UserModel.exists({ _id: meId });
+
+    if (!existMe) throw Error.USER_NOT_FOUND;
+
+    const me = await UserModel.findOneAndUpdate({ _id: meId }, data, { new: true });
+    const friendshipsList = await FriendshipModel.find({
+      $or: [
+        { requester: meId },
+        { addressee: meId },
+      ],
+    });
+
+    friendshipsList.map(friendship => req.app
+      .get('socketio')
+      .to(friendship.getFriendId(meId))
+      .emit('update_user', {
+        userId: meId,
+      }));
+
+    res.json(new User(me));
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error });
+  }
+};
 
 export const postLogin = async (req, res) => {
   try {

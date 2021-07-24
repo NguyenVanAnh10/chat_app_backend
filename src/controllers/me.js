@@ -1,19 +1,33 @@
 import FileType from 'file-type';
 
-import UserModel from 'models/users';
-import FriendShipModel from 'models/friendships';
+import UserModel, { UserStaticModel } from 'models/users';
+import FriendshipModel from 'models/friendships';
 import { putFile } from 'awsS3';
 import Error from 'entities/Error';
 import Image from 'entities/Image';
 import User from 'entities/User';
 
 export const getMe = async (req, res) => {
-  const { user_token: userToken } = req.cookies;
   try {
-    const { userId } = await UserModel.decodeToken(userToken);
-    const me = await UserModel.findOne({ _id: userId });
-    res.json(new User(me));
+    const meId = req.app.get('meId');
+
+    const me = await UserModel.findMe(meId);
+    res.json(me);
   } catch (error) {
+    console.error(error);
+    res.status(401).json({ error });
+  }
+};
+
+export const putStaticMe = async (req, res) => {
+  try {
+    const { icon } = req.body;
+    const meId = req.app.get('meId');
+    if (!icon) throw Error.NO_PARAMS;
+    const result = await UserStaticModel.updateIcon({ meId, icon });
+    res.json(result);
+  } catch (error) {
+    console.error(error);
     res.status(401).json({ error });
   }
 };
@@ -38,17 +52,17 @@ export const putMe = async (req, res) => {
       });
     }
 
-    const me = await UserModel.findOneAndUpdate({ _id: id }, data);
-    const friendShipsList = await FriendShipModel.find({
+    const me = await UserModel.findOneAndUpdate({ _id: id }, data, { new: true });
+    const friendshipsList = await FriendshipModel.find({
       $or: [
         { requester: id },
         { addressee: id },
       ],
     });
 
-    friendShipsList.map(friendShip => req.app
+    friendshipsList.map(friendship => req.app
       .get('socketio')
-      .to(friendShip.getFriendId(id))
+      .to(friendship.getFriendId(id))
       .emit('update_user', {
         userId: id,
       }));

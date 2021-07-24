@@ -10,11 +10,16 @@ import Error from 'entities/Error';
 
 export const getMessages = async (req, res) => {
   const {
-    conversationId, limit = 100, skip = 0,
+    conversationId, limit = 100, skip = 0, messageIds,
   } = req.query;
   try {
     const meId = req.app.get('meId');
-    const messages = await MessageModel.findMessages({ meId, conversationId, skip, limit });
+    const query = { meId, conversationId, skip, limit };
+    if (messageIds) {
+      // eslint-disable-next-line no-underscore-dangle
+      query._id = { $in: messageIds.split(',') };
+    }
+    const messages = await MessageModel.findMessages(query, { conversation: true });
 
     res.json(messages);
   } catch (error) {
@@ -26,8 +31,9 @@ export const getMessages = async (req, res) => {
 export const getMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
+    const { conversationId } = req.query;
     const meId = req.app.get('meId');
-    const message = await MessageModel.findMessage({ meId, messageId });
+    const message = await MessageModel.findMessage({ meId, messageId, conversationId });
     res.json(message);
   } catch (error) {
     console.error(error);
@@ -50,56 +56,73 @@ export const deleteMessage = async (req, res) => {
 export const postMessage = async (req, res) => {
   try {
     const {
-      conversationId, base64Image, contentType, ...rest
+      conversationId, friendId, base64Image, contentType, ...rest
     } = req.body;
-    const sender = req.app.get('meId');
+    const meId = req.app.get('meId');
 
     const existedConversation = await ParticipantModel.exists({
-      user: sender,
+      user: meId,
       conversation: conversationId,
     });
-    if (!existedConversation) throw Error.CONVERSATION_NOT_FOUND;
+    if (conversationId && !existedConversation) throw Error.CONVERSATION_NOT_FOUND;
 
     let message = {};
+    let conversation = {};
     switch (contentType) {
       case Message.CONTENT_TYPE_IMAGE:
         const buffer = Buffer.from(base64Image, 'base64');
         const { mime } = await FileType.fromBuffer(buffer);
 
+        if (!conversationId) {
+          conversation = await ParticipantModel.createConversation({
+            meId,
+            userIds: [friendId],
+            socketIO: req.app.get('socketio'),
+          });
+        }
         const imageUrl = await putFile({
-          id: `${conversationId}-${sender}-${Date.now()}`,
+          id: `${conversationId || conversation.id}-${meId}-${Date.now()}`,
           content: buffer,
           ContentEncoding: 'base64',
           ContentType: mime,
           imageType: Image.MESSAGE,
         });
         message = await MessageModel.create({
-          conversation: conversationId,
+          conversation: conversationId || conversation.id,
           contentType,
           ...rest,
-          sender,
+          sender: meId,
           content: imageUrl,
         });
         break;
       default:
+        if (!conversationId) {
+          conversation = await ParticipantModel.createConversation({
+            meId,
+            userIds: [friendId],
+            socketIO: req.app.get('socketio'),
+          });
+        }
         message = await MessageModel.create({
-          conversation: conversationId,
+          conversation: conversationId || conversation.id,
           contentType,
           ...rest,
-          sender,
+          sender: meId,
         });
         break;
     }
 
     req.app
       .get('socketio')
-      .to(conversationId)
-      .emit('send_message_success', {
-        conversationId,
-        sender: message.sender,
+      .to(conversationId || conversation.id)
+      .emit('get_message', {
+        conversationId: conversationId || conversation.id,
+        senderId: message.sender,
         messageId: message.id,
       });
-    res.json(new Message(message));
+    message = new Message(message);
+    message.conversation = conversationId || conversation;
+    res.json(message);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
@@ -122,6 +145,25 @@ export const getSeenMessages = async (req, res) => {
   }
 };
 
+export const getUnseenMessages = async (req, res) => {
+  try {
+    const { skip, limit, conversationId } = req.query;
+    const meId = req.app.get('meId');
+
+    const unSeenMessages = await MessageModel.findUnseenMessages({
+      meId,
+      skip,
+      limit,
+      conversationId,
+    });
+
+    res.json(unSeenMessages);
+  } catch (error) {
+    console.error(error);
+    res.status(400).json({ error });
+  }
+};
+
 export const postSeenMessages = async (req, res) => {
   try {
     const { conversationId } = req.body;
@@ -129,20 +171,21 @@ export const postSeenMessages = async (req, res) => {
 
     const unSeenMessages = await MessageModel.findUnseenMessages({ meId, conversationId });
 
-    await UserSeenMessageModel.create(unSeenMessages.map(m => ({
+    await UserSeenMessageModel.create(unSeenMessages.messages.map(m => ({
       message: m.id,
       user: meId,
     })));
-
+    const messageIds = unSeenMessages.messages.map(m => m.id);
+    const result = await MessageModel.findMessagesByIds({ meId, conversationId, messageIds });
     req.app
       .get('socketio')
       .to(conversationId)
-      .emit('user_has_seen_messages', {
-        userId: meId,
+      .emit('seen_messages', {
+        seenUserId: meId,
         conversationId,
-        messageIds: unSeenMessages.map(m => m.id).join(','),
+        messageIds: messageIds.join(','),
       });
-    res.json(unSeenMessages);
+    res.json(result);
   } catch (error) {
     console.error(error);
     res.status(400).json({ error });
