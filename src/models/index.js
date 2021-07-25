@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import configs from 'configs';
 
-mongoose.connect(configs.DB_LOCAL_HOST || configs.DB_HOST, {
+mongoose.connect(configs.DB_HOST, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
 });
