@@ -4,6 +4,7 @@ import { ParticipantModel } from 'models/conversations';
 
 const chat = httpServer => {
   const io = new Server(httpServer, {
+    path: '/api/v1/socket/',
     cors: {
       origin: '*',
       methods: ['GET', 'POST'],
