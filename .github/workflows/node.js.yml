@@ -14,7 +14,7 @@ jobs:
         node-version: [16.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     env:
-      DB_HOST: mongodb://localhost:27017/alo_rice?readPreference=primary&appname=MongoDB%20Compass&ssl=false
+      DB_HOST: mongodb://localhost:27017/alo_rice
       DB_NAME: alo_rice
       REGION: ap-southeast-1
       BUCKET_NAME: chat-app-alorice
