@@ -44,4 +44,3 @@ jobs:
     - run: npm i
     - run: npm run build --if-present
     - run: sudo pm2 restart BackendAPI
-    
