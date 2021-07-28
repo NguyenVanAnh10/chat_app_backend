@@ -7,18 +7,47 @@ on:
     branches: [ master ]
 jobs:
   build:
+    environment: production
     runs-on: self-hosted
     strategy:
       matrix:
         node-version: [16.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
+    env:
+      DB_HOST: ${{ secrets.DB_HOST }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      USER_GMAIL: ${{ secrets.USER_GMAIL }}
+      PASS_GMAIL: ${{ secrets.PASS_GMAIL }}
+      SALT_ROUNDS: ${{ secrets.SALT_ROUNDS }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      DB_NAME: alo_rice
+      REGION: ap-southeast-1
+      BUCKET_NAME: chat-app-alorice
+      MEDIA_HOST: https://d1a6kvatqvfvgi.cloudfront.net
+      CLIENT_HOST: https://alorice.xyz
     steps:
     - uses: actions/checkout@v2
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
       with:
         node-version: ${{ matrix.node-version }}
+    - name: create env file
+      run: |
+        touch .env
+        echo DB_HOST=${{ secrets.DB_HOST }} >> .env
+        echo SECRET_KEY=${{ secrets.SECRET_KEY }} >> .env
+        echo USER_GMAIL=${{ secrets.USER_GMAIL }} >> .env
+        echo PASS_GMAIL=${{ secrets.PASS_GMAIL }} >> .env
+        echo SALT_ROUNDS=${{ secrets.SALT_ROUNDS }} >> .env
+        echo AWS_ACCESS_KEY_ID=${{ secrets.AWS_ACCESS_KEY_ID }} >> .env
+        echo AWS_SECRET_ACCESS_KEY=${{ secrets.AWS_SECRET_ACCESS_KEY }} >> .env
+        echo DB_NAME=${{ env.DB_NAME }} >> .env
+        echo REGION=${{ env.REGION }} >> .env
+        echo BUCKET_NAME=${{ env.BUCKET_NAME }} >> .env
+        echo MEDIA_HOST=${{ env.MEDIA_HOST }} >> .env
+        echo CLIENT_HOST=${{ env.CLIENT_HOST }} >> .env
+        cat .env
     - run: npm i
     - run: npm run build --if-present
     - run: sudo pm2 restart BackendAPI
-    
