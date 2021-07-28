@@ -16,6 +16,7 @@ import {
 } from 'controllers/userServices';
 
 const router = Router();
+console.log(' process.env', process.env);
 
 router.post('/login', postLogin);
 router.post('/logout', postLogout);
