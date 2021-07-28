@@ -1,7 +1,6 @@
 import dotenv from 'dotenv';
 
 dotenv.config();
-console.log(' process.env test', process.env);
 
 export default {
   DB_HOST: process.env.DB_HOST,
