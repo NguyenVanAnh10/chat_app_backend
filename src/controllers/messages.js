@@ -1,6 +1,5 @@
 /* eslint-disable no-case-declarations */
-import FileType from 'file-type';
-import { putFile } from 'awsS3';
+import { uploadBase64File } from 'google_cloud_storage/alorice';
 
 import MessageModel, { UserSeenMessageModel } from 'models/messages';
 import { ParticipantModel } from 'models/conversations';
@@ -70,9 +69,6 @@ export const postMessage = async (req, res) => {
     let conversation = {};
     switch (contentType) {
       case Message.CONTENT_TYPE_IMAGE:
-        const buffer = Buffer.from(base64Image, 'base64');
-        const { mime } = await FileType.fromBuffer(buffer);
-
         if (!conversationId) {
           conversation = await ParticipantModel.createConversation({
             meId,
@@ -80,12 +76,10 @@ export const postMessage = async (req, res) => {
             socketIO: req.app.get('socketio'),
           });
         }
-        const imageUrl = await putFile({
+        const imageUrl = await uploadBase64File({
           id: `${conversationId || conversation.id}-${meId}-${Date.now()}`,
-          content: buffer,
-          ContentEncoding: 'base64',
-          ContentType: mime,
-          imageType: Image.MESSAGE,
+          base64: base64Image,
+          destinationFile: Image.MESSAGE,
         });
         message = await MessageModel.create({
           conversation: conversationId || conversation.id,

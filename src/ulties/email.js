@@ -1,7 +1,5 @@
 import nodemailer from 'nodemailer';
 
-import { getImageUrl } from 'awsS3';
-import Image from 'entities/Image';
 import env from 'configs';
 
 let transporter = null;
@@ -28,7 +26,7 @@ const initTransporterEmail = () => {
 };
 
 export const sendTokenConfirmationEmail = async (to, token) => {
-  const logoURL = getImageUrl({ id: 'logo.png', imageType: Image.LOGO });
+  const logoURL = `${env.MEDIA_HOST}/alo-rice/app/logo.png`;
   const mailOptions = {
     to,
     subject: '[AloRice] Welcome! Please confirm your email address.',

@@ -1,8 +1,7 @@
-import FileType from 'file-type';
-
 import UserModel, { UserStaticModel } from 'models/users';
 import FriendshipModel from 'models/friendships';
-import { putFile } from 'awsS3';
+import { uploadBase64File } from 'google_cloud_storage/alorice';
+
 import Error from 'entities/Error';
 import Image from 'entities/Image';
 import User from 'entities/User';
@@ -41,14 +40,10 @@ export const putMe = async (req, res) => {
     const data = rest || {};
 
     if (base64AvatarImage) {
-      const buffer = Buffer.from(base64AvatarImage, 'base64');
-      const { mime } = await FileType.fromBuffer(buffer);
-      data.avatar = await putFile({
+      data.avatar = await uploadBase64File({
         id,
-        content: buffer,
-        ContentEncoding: 'base64',
-        ContentType: mime,
-        imageType: Image.AVATAR,
+        base64: base64AvatarImage,
+        destinationFile: Image.AVATAR,
       });
     }
 
