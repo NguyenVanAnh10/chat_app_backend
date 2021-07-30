@@ -28,14 +28,13 @@ export const getConversation = async (req, res) => {
 };
 
 export const postConversation = async (req, res) => {
-  const { userIds: usrIds, name } = req.body;
+  const { userIds, name } = req.body;
   const meId = req.app.get('meId');
 
   try {
-    if (!usrIds) throw Error.NO_PARAMS;
-    const userIds = usrIds.concat(meId);
+    if (!userIds) throw Error.NO_PARAMS;
 
-    const existUsers = await UserModel.existsUsers(userIds);
+    const existUsers = await UserModel.existsUsers([meId, ...userIds]);
     if (!existUsers) throw Error.USER_NOT_FOUND;
 
     const conversation = await ParticipantModel.createConversation({
