@@ -187,6 +187,7 @@ friendshipSchema.statics.getFriends = async function getFriends(meId) {
               id: '$$row._id',
               userName: '$$row.userName',
               email: '$$row.email',
+              avatar: '$$row.avatar',
               online: '$$row.online',
             },
           },
