@@ -188,6 +188,115 @@ participantSchema.statics.findConversation = async function ({ meId, conversatio
   return conversation[0] || {};
 };
 
+participantSchema.statics.findConversationByMembers = async function ({ meId, members = [] }) {
+  const conversation = await this.aggregate([
+    {
+      $match: {
+        user: meId,
+      },
+    },
+    {
+      $lookup: {
+        from: 'participants',
+        localField: 'conversation',
+        foreignField: 'conversation',
+        as: 'participantsRef',
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'participantsRef.user',
+        foreignField: '_id',
+        as: 'members',
+      },
+    },
+    {
+      $lookup: {
+        from: 'conversations',
+        localField: 'conversation',
+        foreignField: '_id',
+        as: 'conversationRef',
+      },
+    },
+    {
+      $replaceRoot: {
+        newRoot: { $mergeObjects: ['$$ROOT', { $arrayElemAt: ['$conversationRef', 0] }] },
+      },
+    },
+    {
+      $group: {
+        _id: '$user',
+        conversations: { $push: '$$ROOT' },
+      },
+    },
+    {
+      $unwind: '$conversations',
+    },
+    {
+      $replaceWith: '$conversations',
+    },
+    {
+      $addFields: {
+        memberIds: {
+          $map: {
+            input: '$members',
+            as: 'member',
+            in: '$$member._id',
+          },
+        },
+      },
+    },
+    {
+      $project: {
+        id: '$_id',
+        _id: 0,
+        name: '$name',
+        creator: '$creator',
+        createdAt: '$createdAt',
+        members: {
+          $map: {
+            input: '$members',
+            as: 'row',
+            in: {
+              id: '$$row._id',
+              userName: '$$row.userName',
+              email: '$$row.email',
+              avatar: '$$row.avatar',
+              online: '$$row.online',
+            },
+          },
+        },
+        memberIds: '$memberIds',
+      },
+    },
+    {
+      $set: {
+        memberIds: {
+          $function: {
+            body(memberIds) {
+              return memberIds.sort();
+            },
+            args: ['$memberIds'],
+            lang: 'js',
+          },
+        },
+      },
+    },
+    {
+      $match: {
+        $expr: {
+          $eq: [
+            '$memberIds', members.sort(),
+          ],
+        },
+
+      },
+    },
+  ]);
+  return conversation[0] || {};
+};
+
 participantSchema.statics.createConversation = async function ({
   meId,
   name,

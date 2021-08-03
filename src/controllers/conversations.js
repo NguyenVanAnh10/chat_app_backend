@@ -18,8 +18,18 @@ export const getConversations = async (req, res) => {
 export const getConversation = async (req, res) => {
   try {
     const { conversationId } = req.params;
+    const { members = '' } = req.query;
     const meId = req.app.get('meId');
-    const conversation = await ParticipantModel.findConversation({ meId, conversationId });
+    let conversation = {};
+    if (members) {
+      conversation = await ParticipantModel.findConversationByMembers({
+        meId,
+        members: members.split(',').filter(i => !!i),
+      });
+      res.json(conversation);
+      return;
+    }
+    conversation = await ParticipantModel.findConversation({ meId, conversationId });
     res.json(conversation);
   } catch (error) {
     console.error(error);

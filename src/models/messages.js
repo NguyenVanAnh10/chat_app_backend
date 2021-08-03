@@ -78,7 +78,7 @@ export const UserSeenMessageModel = mongoose.model('user_seen_messages',
 messageSchema.statics.deleteAllMessagesOfConversation = async function (conversationId) {
   const deletedMessageIds = (await this.find({
     conversation: conversationId,
-  // eslint-disable-next-line no-underscore-dangle
+    // eslint-disable-next-line no-underscore-dangle
   })).map(m => m._id);
   await this.deleteMany({
     conversation: conversationId,
@@ -226,18 +226,28 @@ messageSchema.statics.deleteMessage = async function findMessage({ meId, message
 
 // TODO
 messageSchema.statics.findMessages = async function findMessages({
-  meId, skip = 0, limit = 100, conversationId, ...additionalMatch
-}, totalOpt = { conversation: false }) {
+  meId,
+  skip = 0,
+  limit = 100,
+  conversationId,
+  ...additionalMatch
+}, totalOptions) {
   const match = {
     participants: { $elemMatch: { user: { $eq: meId } } },
     ...additionalMatch,
   };
-  if (conversationId) match.conversation = conversationId;
-  let totalMatch = { ...match, meId };
-  if (totalOpt.conversation && conversationId) {
-    totalMatch = { conversation: conversationId, meId };
+
+  let totalQuery = { ...match, meId };
+  if (conversationId) {
+    match.conversation = conversationId;
+    totalQuery.conversation = conversationId;
   }
-  const total = await this.getMessageNumber(totalMatch);
+
+  if (conversationId && totalOptions?.forceFetchingTotalNumberByConversationId) {
+    totalQuery = { meId, conversation: conversationId };
+  }
+
+  const total = await this.getMessageNumber(totalQuery);
   const messages = await this.aggregate([
     {
       $lookup: {
@@ -309,7 +319,7 @@ messageSchema.statics.findUnseenMessages = async function findUnseenMessages({
 }) {
   const match = {
     'usersSeenMessage.user': { $ne: meId },
-    sender: { $ne: meId },
+    $or: [{ sender: { $ne: meId } }, { contentType: Message.CONTENT_TYPE_NOTIFICATION }],
   };
   const result = await this.findMessages({
     meId, conversationId, skip, limit, ...match,
@@ -322,7 +332,7 @@ messageSchema.statics.findSeenMessages = async function findSeenMessages({
 }) {
   const match = {
     usersSeenMessage: { $elemMatch: { user: { $eq: meId } } },
-    sender: { $ne: meId },
+    $or: [{ sender: { $ne: meId } }, { contentType: Message.CONTENT_TYPE_NOTIFICATION }],
   };
   const result = await this.findMessages({
     meId, conversationId, skip, limit, ...match,
@@ -332,14 +342,19 @@ messageSchema.statics.findSeenMessages = async function findSeenMessages({
 };
 
 messageSchema.statics.findMessagesByIds = async function findMessagesByIds({
-  meId, conversationId, skip = 0, limit = 1000, messageIds = [],
+  meId,
+  conversationId,
+  skip = 0,
+  limit = 1000,
+  messageIds = [],
+  forceFetchingTotalNumberByConversationId = false,
 }) {
   const match = {
     _id: { $in: messageIds },
   };
   const result = await this.findMessages({
     meId, conversationId, skip, limit, ...match,
-  });
+  }, { forceFetchingTotalNumberByConversationId });
 
   return result;
 };

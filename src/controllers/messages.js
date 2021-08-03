@@ -14,11 +14,16 @@ export const getMessages = async (req, res) => {
   try {
     const meId = req.app.get('meId');
     const query = { meId, conversationId, skip, limit };
+    let messages;
     if (messageIds) {
-      // eslint-disable-next-line no-underscore-dangle
-      query._id = { $in: messageIds.split(',') };
+      messages = await MessageModel.findMessagesByIds({
+        ...query,
+        messageIds: messageIds.split(',').filter(i => !!i),
+        forceFetchingTotalNumberByConversationId: true,
+      });
+      return res.json(messages);
     }
-    const messages = await MessageModel.findMessages(query, { conversation: true });
+    messages = await MessageModel.findMessages(query);
 
     res.json(messages);
   } catch (error) {
@@ -113,6 +118,7 @@ export const postMessage = async (req, res) => {
         conversationId: conversationId || conversation.id,
         senderId: message.sender,
         messageId: message.id,
+        messageContentType: message.contentType,
       });
     message = new Message(message);
     message.conversation = conversationId || conversation;
@@ -170,7 +176,7 @@ export const postSeenMessages = async (req, res) => {
       user: meId,
     })));
     const messageIds = unSeenMessages.messages.map(m => m.id);
-    const result = await MessageModel.findMessagesByIds({ meId, conversationId, messageIds });
+    const result = await MessageModel.findMessagesByIds({ meId, messageIds });
     req.app
       .get('socketio')
       .to(conversationId)

@@ -31,11 +31,17 @@ const chat = httpServer => {
       try {
         let conversation = {};
         if (!conversationId && addresseeIds.length) {
-          conversation = await ParticipantModel.createConversation({
+          conversation = await ParticipantModel.findConversationByMembers({
             meId: callerId,
-            userIds: [...addresseeIds],
-            socketIO: io,
+            members: [...addresseeIds, callerId],
           });
+          if (!conversation.id) {
+            conversation = await ParticipantModel.createConversation({
+              meId: callerId,
+              userIds: addresseeIds,
+              socketIO: io,
+            });
+          }
         }
         socket.to(conversationId || conversation.id).emit('have_a_coming_call', {
           conversationId: conversationId || conversation.id,
