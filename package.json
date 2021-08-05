@@ -1,6 +1,5 @@
 {
   "dependencies": {
-    "@babel/runtime": "^7.14.0",
     "@google-cloud/storage": "^5.11.0",
     "bcrypt": "^5.0.1",
     "body-parser": "^1.19.0",
@@ -22,12 +21,11 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
-    "@babel/cli": "^7.14.8",
+    "@babel/runtime": "^7.14.0",
     "@babel/core": "^7.14.3",
     "@babel/node": "^7.14.5",
     "@babel/plugin-transform-runtime": "^7.14.3",
     "@babel/preset-env": "^7.14.4",
-    "@babel/preset-es2017": "^7.0.0-beta.53",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.2",
     "babel-plugin-module-resolver": "^4.1.0",
