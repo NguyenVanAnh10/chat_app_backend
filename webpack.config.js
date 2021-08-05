@@ -1,9 +1,8 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
-const webpack = require('webpack');
+const { SourceMapDevToolPlugin } = require('webpack');
 
-module.exports = {
-  mode: 'production',
+const config = {
   entry: './src/index.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
@@ -12,12 +11,9 @@ module.exports = {
   context: path.resolve(__dirname),
   target: 'node',
   externals: [nodeExternals()],
-  devtool: false,
-  plugins: [new webpack.SourceMapDevToolPlugin({
-    filename: '[name].js.map',
-    exclude: ['vendor.js'],
-  }),
-  ],
+  resolve: {
+    modules: [path.resolve(__dirname, 'src'), 'node_modules'],
+  },
   module: {
     rules: [
       {
@@ -33,8 +29,17 @@ module.exports = {
       },
     ],
   },
-  node: {
-    __filename: true,
-    __dirname: true,
-  },
+};
+
+module.exports = (env, argv) => {
+  if (argv.mode === 'development') {
+    config.devtool = 'source-map';
+    config.plugins = [new SourceMapDevToolPlugin({
+      filename: '[name].js.map',
+      exclude: ['vendor.js'],
+    }),
+    ];
+  }
+
+  return config;
 };

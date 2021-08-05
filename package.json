@@ -22,10 +22,12 @@
   "main": "index.js",
   "license": "MIT",
   "devDependencies": {
+    "@babel/cli": "^7.14.8",
     "@babel/core": "^7.14.3",
     "@babel/node": "^7.14.5",
     "@babel/plugin-transform-runtime": "^7.14.3",
     "@babel/preset-env": "^7.14.4",
+    "@babel/preset-es2017": "^7.0.0-beta.53",
     "babel-eslint": "^10.1.0",
     "babel-loader": "^8.2.2",
     "babel-plugin-module-resolver": "^4.1.0",
@@ -41,8 +43,7 @@
   },
   "scripts": {
     "start": "node dist/index.js",
-    "dev": "npx webpack --config webpack.development.config.js && npx nodemon --inspect dist/index.js",
-    "start-dev": "npx nodemon --inspect dist/index.js",
-    "build": "npx webpack --config webpack.production.config.js"
+    "dev": "npx nodemon --exec 'npx webpack --mode=development --config webpack.config.js && node --inspect dist/index.js'",
+    "build": "npx webpack --mode=production --config webpack.config.js"
   }
 }

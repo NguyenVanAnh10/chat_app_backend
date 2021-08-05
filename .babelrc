@@ -1,4 +1,10 @@
 {
+  "env": {
+    "development": {
+      "sourceMaps": true,
+      "retainLines": true
+    }
+  },
   "presets": ["@babel/preset-env"],
   "plugins": [
     "@babel/plugin-transform-runtime",

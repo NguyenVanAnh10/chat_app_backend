@@ -3,7 +3,6 @@ import FriendshipModel from 'models/friendships';
 export const getFriends = async (req, res) => {
   try {
     const meId = req.app.get('meId');
-
     const friends = await FriendshipModel.getFriends(meId);
     res.json(friends);
   } catch (error) {
