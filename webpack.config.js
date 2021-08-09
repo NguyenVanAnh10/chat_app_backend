@@ -3,7 +3,7 @@ const nodeExternals = require('webpack-node-externals');
 const { SourceMapDevToolPlugin } = require('webpack');
 
 const config = {
-  entry: './src/index.js',
+  entry: './src/index.ts',
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js',
@@ -17,14 +17,11 @@ const config = {
   module: {
     rules: [
       {
-        test: /\.m?js$/,
+        test: /\.ts$/,
         exclude: /node_modules/,
         include: [path.resolve(__dirname, 'src')],
         use: {
-          loader: 'babel-loader',
-          options: {
-            presets: ['@babel/preset-env'],
-          },
+          loader: 'ts-loader',
         },
       },
     ],
@@ -34,10 +31,11 @@ const config = {
 module.exports = (env, argv) => {
   if (argv.mode === 'development') {
     config.devtool = 'source-map';
-    config.plugins = [new SourceMapDevToolPlugin({
-      filename: '[name].js.map',
-      exclude: ['vendor.js'],
-    }),
+    config.plugins = [
+      new SourceMapDevToolPlugin({
+        filename: '[name].js.map',
+        exclude: ['vendor.js'],
+      }),
     ];
   }
 
