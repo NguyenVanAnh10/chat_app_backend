@@ -47,6 +47,9 @@ conversationSchema.statics.updateConversation = async function (
 conversationSchema.statics.findConversation = async function ({
   meId,
   conversationId,
+}: {
+  meId: string;
+  conversationId: string;
 }): Promise<IConversation> {
   const conversation = await ParticipantModel.aggregate([
     {
@@ -124,7 +127,10 @@ conversationSchema.statics.findConversation = async function ({
 
 conversationSchema.statics.findConversationByMembers = async function ({
   meId,
-  members = [],
+  members,
+}: {
+  meId: string;
+  members: Array<string>;
 }): Promise<IConversation> {
   const conversation = await ParticipantModel.aggregate([
     {
@@ -211,7 +217,7 @@ conversationSchema.statics.findConversationByMembers = async function ({
       $set: {
         memberIds: {
           $function: {
-            body(memberIds) {
+            body(memberIds: Array<string>) {
               return memberIds.sort();
             },
             args: ['$memberIds'],
@@ -229,41 +235,6 @@ conversationSchema.statics.findConversationByMembers = async function ({
     },
   ]);
   return <IConversation>(conversation[0] || {});
-};
-
-conversationSchema.statics.createConversation = async function ({
-  meId,
-  name,
-  socketIO,
-  userIds,
-}: {
-  meId: string;
-  name: string;
-  socketIO: Server;
-  userIds: Array<string>;
-}): Promise<IConversation> {
-  if (!userIds.length) throw new CustomError(Errors.NO_PARAMS);
-
-  const existConversation = await this.existsConversation([meId, ...userIds]);
-  if (existConversation) throw new CustomError(Errors.CONVERSATION_ALREADY_EXISTS);
-
-  const conv = await this.create({ creator: meId, name });
-  await Promise.all(
-    [meId, ...userIds].map(async user => {
-      await ParticipantModel.create({ user, conversation: conv.id });
-      socketIO.in(user).socketsJoin(conv.id);
-      return socketIO.to(user).emit('add_new_conversation', {
-        creatorId: meId,
-        conversationId: conv.id,
-      });
-    })
-  );
-
-  const conversation = await this.findConversation({
-    meId,
-    conversationId: conv.id,
-  });
-  return conversation;
 };
 
 export default model<IConversation, IConversationModel>('conversations', conversationSchema);

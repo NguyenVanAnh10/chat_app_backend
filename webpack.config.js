@@ -8,11 +8,11 @@ const config = {
     path: path.resolve(__dirname, 'dist'),
     filename: 'index.js',
   },
-  context: path.resolve(__dirname),
   target: 'node',
   externals: [nodeExternals()],
   resolve: {
-    modules: [path.resolve(__dirname, 'src'), 'node_modules'],
+    modules: ['src'],
+    extensions: ['.ts', '.js'],
   },
   module: {
     rules: [

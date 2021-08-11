@@ -5,6 +5,7 @@ import Message from 'entities/Message';
 import UserSeenMessageModel from 'models/UserSeenMessages';
 import ParticipantModel from 'models/Participant';
 import CustomError, { Errors } from 'entities/CustomError';
+import { IConversation } from 'types/conversation';
 
 import {
   IMessage,
@@ -66,7 +67,7 @@ messageSchema.statics.deleteAllMessagesOfConversation = async function (
       conversation: conversationId,
       // eslint-disable-next-line no-underscore-dangle
     })
-  ).map(m => m._id);
+  ).map((m: IConversation): string => m.id);
   await this.deleteMany({
     conversation: conversationId,
   });
@@ -74,7 +75,7 @@ messageSchema.statics.deleteAllMessagesOfConversation = async function (
     message: { $in: deletedMessageIds },
   });
 };
-
+// TODO parameter types
 messageSchema.statics.getMessageNumber = async function ({ meId, ...match }) {
   const count =
     (
