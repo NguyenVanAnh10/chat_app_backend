@@ -18,7 +18,7 @@ export const UserVerificationModel = model(
   'user_verifications',
   schemaWrapper(
     new Schema<IUserVerification>({
-      id: String,
+      _id: String,
       registryToken: String,
       isVerified: {
         type: Boolean,
@@ -31,7 +31,7 @@ export const UserVerificationModel = model(
 
 const userSchema = schemaWrapper(
   new Schema<IDetailUser>({
-    id: String,
+    _id: String,
     userName: { type: String, required: true },
     password: { type: String, default: null },
     email: { type: String, required: true },
@@ -316,7 +316,7 @@ const UserModel = model<IDetailUser, IDetailUserModel>('users', userSchema);
 
 const userStaticSchema = schemaWrapper(
   new Schema<IUserStatic>({
-    id: String,
+    _id: String,
     user: {
       type: String,
       ref: 'user',

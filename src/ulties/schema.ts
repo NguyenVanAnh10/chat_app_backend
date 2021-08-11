@@ -1,7 +1,6 @@
-import { Types } from 'mongoose';
+import { Schema, Types } from 'mongoose';
 
-// TODO
-function schemaWrapper(schema) {
+function schemaWrapper(schema: any): any {
   schema.pre('save', function (): void {
     if (!this._id) {
       this._id = new Types.ObjectId().toString();
@@ -9,7 +8,7 @@ function schemaWrapper(schema) {
     if (typeof this._id === 'object') {
       this._id = this._id.toString();
     }
-    if (!this.createdAt) this.createdAt = new Date();
+    // if (!this.createdAt) this.createdAt = new Date();
   });
   schema.set('toJSON', {
     virtuals: false,

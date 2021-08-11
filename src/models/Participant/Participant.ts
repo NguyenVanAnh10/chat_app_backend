@@ -6,12 +6,12 @@ export interface IParticipant {
   id: string;
   user: string;
   conversation: string;
-  createdAt?: Date;
+  createdAt: Date;
 }
 
 const participantSchema = schemaWrapper(
   new Schema<IParticipant>({
-    id: String,
+    _id: String,
     user: {
       type: String,
       ref: 'users',

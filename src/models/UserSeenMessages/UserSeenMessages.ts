@@ -11,7 +11,7 @@ interface IUserSeenMessage {
 
 const userSeenMessageSchema = schemaWrapper(
   new Schema<IUserSeenMessage>({
-    id: String,
+    _id: String,
     message: {
       type: String,
       required: true,

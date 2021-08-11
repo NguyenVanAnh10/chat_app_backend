@@ -21,10 +21,9 @@ interface IDetailUser {
   email: string;
   avatar: string;
   online: boolean;
-  verification: string;
+  verification: PopulatedDoc<IUserVerification & Document>;
   static: string;
   createdAt: Date;
-  verificationRef: any; // TODO
   validatePassword(password: string): Promise<boolean>;
   setPassword(password: string): Promise<void>;
 }

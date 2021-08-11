@@ -3,6 +3,7 @@ import { Request, Response } from 'express';
 import UserModel, { UserVerificationModel } from 'models/User/User';
 import FriendshipModel from 'models/Friendship';
 import CustomError, { Errors } from 'entities/CustomError';
+import { IUserVerification } from 'types/user';
 
 export const putOnline = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -34,10 +35,11 @@ export const putOnline = async (req: Request, res: Response): Promise<void> => {
 export const postLogin = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userName, password } = req.body;
-    const me = await UserModel.findOne({ userName }).populate('verificationRef');
+    const me = await UserModel.findOne({ userName }).populate('verification');
 
     if (!me) throw new CustomError(Errors.GET_ACCOUNT);
-    if (!me.verificationRef.isVerified) throw new CustomError(Errors.INVALIDATE_ACCOUNT);
+    if (!(me.verification as IUserVerification).isVerified)
+      throw new CustomError(Errors.INVALIDATE_ACCOUNT);
 
     const isTruePassword = await me.validatePassword(password);
     if (!isTruePassword) throw new CustomError(Errors.PASSWORD_IS_WRONG);

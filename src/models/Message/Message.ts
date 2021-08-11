@@ -19,7 +19,7 @@ import {
 
 const messageSchema = schemaWrapper(
   new Schema<IMessage>({
-    id: String,
+    _id: String,
     sender: {
       type: String,
       required: true,

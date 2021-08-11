@@ -41,7 +41,7 @@ interface IFriendshipModel extends Model<IFriendship> {
 
 const friendshipSchema = schemaWrapper(
   new Schema<IFriendship>({
-    id: String,
+    _id: String,
     requester: {
       type: String,
       required: true,
