@@ -10,7 +10,7 @@ interface IConversation {
 
 interface IConversationModel extends Model<IConversation> {
   existsConversation(userIds: Array<string>): Promise<boolean>;
-  findConversations({ meId }): Promise<Array<IConversation>>;
+  findConversations({ meId }: { meId: string }): Promise<Array<IConversation>>;
   findConversationByMembers({ meId, members }): Promise<IConversation>;
   findConversation({ meId, conversationId }): Promise<IConversation>;
   createConversation({

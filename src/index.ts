@@ -4,7 +4,7 @@ import http from 'http';
 import cookieParser from 'cookie-parser';
 
 import chatSocket from 'sockets/chat';
-import db from 'models';
+import initDatabase from 'models';
 import initTransporterEmail from 'ulties/email';
 import route from './route/index';
 
@@ -12,6 +12,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 const httpServer = http.createServer(app);
 const io = chatSocket(httpServer);
+const db = initDatabase();
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
