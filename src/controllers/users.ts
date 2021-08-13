@@ -6,7 +6,7 @@ import { sendTokenConfirmationEmail } from 'ulties/email';
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { keyword, userIds, limit = 100, skip = 0 } = req.query;
+    const { keyword = '', userIds = '', limit = 100, skip = 0 } = req.query;
     const meId = req.app.get('meId');
     const users = await UserModel.findUsers({
       meId,

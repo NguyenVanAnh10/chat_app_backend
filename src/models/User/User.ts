@@ -1,8 +1,7 @@
-import { model, Schema } from 'mongoose';
+import { model, Schema, Types } from 'mongoose';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 
-import schemaWrapper from 'ulties/schema';
 import env from 'configs';
 import {
   IDecodeToken,
@@ -16,40 +15,61 @@ import {
 
 export const UserVerificationModel = model(
   'user_verifications',
-  schemaWrapper(
-    new Schema<IUserVerification>({
-      _id: String,
-      registryToken: String,
-      isVerified: {
-        type: Boolean,
-        required: true,
-        default: false,
-      },
-    })
-  )
-);
-
-const userSchema = schemaWrapper(
-  new Schema<IDetailUser>({
+  new Schema<IUserVerification>({
     _id: String,
-    userName: { type: String, required: true },
-    password: { type: String, default: null },
-    email: { type: String, required: true },
-    avatar: String,
-    online: { type: Boolean, default: false },
-    verification: {
-      type: String,
-      ref: 'user_verifications',
+    registryToken: String,
+    isVerified: {
+      type: Boolean,
       required: true,
+      default: false,
     },
-    static: {
-      type: String,
-      ref: 'user_statics',
-      required: false,
-    },
-    createdAt: Date,
   })
 );
+
+const userSchema = new Schema<IDetailUser>({
+  _id: String,
+  userName: { type: String, required: true },
+  password: { type: String, default: null },
+  email: { type: String, required: true },
+  avatar: { type: String, required: true, default: '' },
+  online: { type: Boolean, default: false },
+  verification: {
+    type: String,
+    ref: 'user_verifications',
+    required: true,
+  },
+  static: {
+    type: String,
+    ref: 'user_statics',
+    required: false,
+  },
+  createdAt: { type: Date, required: true },
+});
+
+userSchema.pre('save', function (): void {
+  if (!this._id) {
+    this._id = new Types.ObjectId().toString();
+  }
+  if (typeof this._id === 'object') {
+    this._id = this._id.toString();
+  }
+});
+
+userSchema.set('toJSON', {
+  virtuals: false,
+  versionKey: false,
+  transform(_, ret) {
+    return {
+      id: ret._id,
+      userName: ret.userName,
+      email: ret.email,
+      avatar: ret.avatar,
+      online: ret.online,
+      createdAt: ret.createdAt,
+      statics: ret.statics,
+    };
+  },
+});
 
 userSchema.virtual('verificationRef', {
   ref: 'user_verifications',
@@ -182,7 +202,7 @@ userSchema.statics.findUsers = async function ({
   keyword: string;
   limit?: number;
   skip?: number;
-}): Promise<IUser> {
+}): Promise<Array<IUser>> {
   const users = await this.aggregate([
     {
       $match: {
@@ -255,7 +275,7 @@ userSchema.statics.findUsers = async function ({
     { $skip: skip },
     { $limit: limit },
   ]);
-  return users;
+  return users as Array<IUser>;
 };
 
 userSchema.statics.existsUsers = async function (userIds: Array<string>): Promise<boolean> {
@@ -314,18 +334,15 @@ userSchema.statics.findMe = async function (meId: string): Promise<IDetailUser> 
 
 const UserModel = model<IDetailUser, IDetailUserModel>('users', userSchema);
 
-const userStaticSchema = schemaWrapper(
-  new Schema<IUserStatic>({
-    _id: String,
-    user: {
-      type: String,
-      ref: 'user',
-      required: true,
-    },
-    icons: [String],
-  })
-);
-
+const userStaticSchema = new Schema<IUserStatic>({
+  _id: String,
+  user: {
+    type: String,
+    ref: 'user',
+    required: true,
+  },
+  icons: [String],
+});
 userStaticSchema.statics.updateIcon = async function ({
   meId,
   icon,

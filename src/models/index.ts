@@ -1,22 +1,25 @@
 import mongoose from 'mongoose';
 import configs from 'configs';
 
-const initDatabase = (): mongoose.Connection => {
-  mongoose
-    .connect(configs.DB_HOST, {
-      useFindAndModify: false,
-    })
-    .catch(e => console.error('connection error:', e));
+const initDatabase = async (): Promise<void> => {
+  try {
+    mongoose.set('useNewUrlParser', true);
+    mongoose.set('useUnifiedTopology', true);
+    await mongoose.connect(configs.DB_HOST, {
+      useFindAndModify: true,
+    });
 
-  mongoose.set('useNewUrlParser', true);
-  mongoose.set('useUnifiedTopology', true);
-
-  const db = mongoose.connection;
-  db.once('open', () => {
-    // we're connected!
-    console.info('Mongodb is connected successful');
-  });
-  return db;
+    mongoose.connection.once('connected', () => {
+      // we're connected!
+      console.info('Mongodb is connected successful');
+    });
+    process.on('SIGTERM', async () => {
+      // close mongoose
+      await mongoose.connection.close();
+    });
+  } catch (error) {
+    console.error('connection error:', error);
+  }
 };
 
 export default initDatabase;

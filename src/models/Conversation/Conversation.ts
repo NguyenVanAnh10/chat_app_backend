@@ -127,7 +127,7 @@ conversationSchema.statics.findConversations = async function ({
 }: {
   meId: string;
 }): Promise<Array<IConversation>> {
-  const conversations = await this.aggregate([
+  const conversations = await ParticipantModel.aggregate([
     {
       $match: {
         user: meId,

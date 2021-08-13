@@ -21,9 +21,11 @@ interface IDetailUser {
   email: string;
   avatar: string;
   online: boolean;
-  verification: PopulatedDoc<IUserVerification & Document>;
-  static: string;
+  verification: string;
   createdAt: Date;
+  static?: string;
+  statics?: IUserStatic;
+  verificationRef?: PopulatedDoc<IUserVerification & Document>;
   validatePassword(password: string): Promise<boolean>;
   setPassword(password: string): Promise<void>;
 }
@@ -60,7 +62,7 @@ interface IDetailUserModel extends Model<IDetailUser> {
     keyword: string;
     limit?: number;
     skip?: number;
-  }): Promise<IUser>;
+  }): Promise<Array<IUser>>;
   existsUsers(userIds: Array<string>): Promise<boolean>;
   findMe(meId: string): Promse<IDetailUser>;
 }

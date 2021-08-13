@@ -7,7 +7,8 @@
   },
   "rules": {
     "no-param-reassign": "warn",
-    "no-underscore-dangle": "warn"
+    "no-underscore-dangle": "warn",
+    "import/no-extraneous-dependencies": "warn"
   },
   "settings": {
     "import/resolver": {

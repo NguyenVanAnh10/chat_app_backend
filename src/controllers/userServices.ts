@@ -8,6 +8,7 @@ import { IUserVerification } from 'types/user';
 export const putOnline = async (req: Request, res: Response): Promise<void> => {
   try {
     const meId = req.app.get('meId');
+    const socketIO = req.app.get('socketio');
 
     const data = req.body;
     const existMe = await UserModel.exists({ _id: meId });
@@ -19,11 +20,13 @@ export const putOnline = async (req: Request, res: Response): Promise<void> => {
       $or: [{ requester: meId }, { addressee: meId }],
     });
 
-    friendshipsList.map(friendship =>
-      req.app.get('socketio').to(friendship.getFriendId(meId)).emit('update_user', {
-        userId: meId,
-      })
-    );
+    if (socketIO) {
+      friendshipsList.map(friendship =>
+        socketIO.to(friendship.getFriendId(meId)).emit('update_user', {
+          userId: meId,
+        })
+      );
+    }
 
     res.json(me);
   } catch (error) {
@@ -35,19 +38,20 @@ export const putOnline = async (req: Request, res: Response): Promise<void> => {
 export const postLogin = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userName, password } = req.body;
-    const me = await UserModel.findOne({ userName }).populate('verification');
+    const me = await UserModel.findOne({ userName }).populate('verificationRef');
 
     if (!me) throw new CustomError(Errors.GET_ACCOUNT);
-    if (!(me.verification as IUserVerification).isVerified)
+    if (!(me.verificationRef as IUserVerification).isVerified)
       throw new CustomError(Errors.INVALIDATE_ACCOUNT);
 
     const isTruePassword = await me.validatePassword(password);
     if (!isTruePassword) throw new CustomError(Errors.PASSWORD_IS_WRONG);
 
     const userToken = await UserModel.generateToken({ userId: me.id });
+    const detailMe = await UserModel.findMe(me.id as string);
 
     res.cookie('user_token', userToken);
-    res.json(me);
+    res.json(detailMe);
   } catch (error) {
     console.error(error);
     res.status(401).send({ error });

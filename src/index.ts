@@ -12,7 +12,7 @@ const PORT = process.env.PORT || 5000;
 const app = express();
 const httpServer = http.createServer(app);
 const io = chatSocket(httpServer);
-const db = initDatabase();
+initDatabase();
 
 app.use(cors());
 app.use(express.json({ limit: '5mb' }));
@@ -23,11 +23,10 @@ initTransporterEmail();
 app.use('/api/v1', route);
 
 process.on('SIGTERM', () => {
-  console.info('SIGTERM signal received.');
-  console.log('Closing http server.');
+  console.info('SIGTERM signal received');
+  // Close http server
   httpServer.close(async () => {
-    console.log('Http server closed.');
-    await db.close();
+    console.log('Http server closed');
     process.exit(0);
   });
 });
