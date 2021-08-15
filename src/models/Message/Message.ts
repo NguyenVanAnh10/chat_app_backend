@@ -1,6 +1,5 @@
-import { Schema, model } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
 
-import schemaWrapper from 'ulties/schema';
 import Message from 'entities/Message';
 import UserSeenMessageModel from 'models/UserSeenMessages';
 import ParticipantModel from 'models/Participant';
@@ -11,41 +10,52 @@ import {
   IMessage,
   IMessageModel,
   IMessagesGetting,
-  IFindMessages,
   IGettingMessageTotalOptions,
-  IFindMessagesByIds,
+  IMessagesQueryByIds,
   IFindMessage,
+  IFindingMessagesAdditionalMatch,
+  ITotalQuery,
+  IMessagesQuery,
+  IBaseMessagesQuery,
 } from 'types/message';
 
-const messageSchema = schemaWrapper(
-  new Schema<IMessage>({
-    _id: String,
-    sender: {
-      type: String,
-      required: true,
-      ref: 'users',
-    },
-    conversation: {
-      type: String,
-      required: true,
-      ref: 'conversations',
-    },
-    contentType: {
-      type: String,
-      enum: [
-        Message.CONTENT_TYPE_TEXT,
-        Message.CONTENT_TYPE_AUDIO,
-        Message.CONTENT_TYPE_VIDEO,
-        Message.CONTENT_TYPE_IMAGE,
-        Message.CONTENT_TYPE_NOTIFICATION,
-      ],
-      default: Message.CONTENT_TYPE_TEXT,
-      required: true,
-    },
-    content: String,
-    createdAt: Date,
-  })
-);
+const messageSchema = new Schema<IMessage>({
+  _id: String,
+  sender: {
+    type: String,
+    required: true,
+    ref: 'users',
+  },
+  conversation: {
+    type: String,
+    required: true,
+    ref: 'conversations',
+  },
+  contentType: {
+    type: String,
+    enum: [
+      Message.CONTENT_TYPE_TEXT,
+      Message.CONTENT_TYPE_AUDIO,
+      Message.CONTENT_TYPE_VIDEO,
+      Message.CONTENT_TYPE_IMAGE,
+      Message.CONTENT_TYPE_NOTIFICATION,
+    ],
+    default: Message.CONTENT_TYPE_TEXT,
+    required: true,
+  },
+  content: String,
+  createdAt: { type: Date, default: new Date() },
+});
+
+messageSchema.pre('save', function (): void {
+  if (!this._id) {
+    this._id = new Types.ObjectId().toString();
+  }
+  if (typeof this._id === 'object') {
+    this._id = this._id.toString();
+  }
+});
+
 messageSchema.virtual('senderRef', {
   ref: 'users',
   localField: 'sender',
@@ -75,8 +85,14 @@ messageSchema.statics.deleteAllMessagesOfConversation = async function (
     message: { $in: deletedMessageIds },
   });
 };
-// TODO parameter types
-messageSchema.statics.getMessageNumber = async function ({ meId, ...match }) {
+messageSchema.statics.getMessageNumber = async function ({
+  meId,
+  ...match
+}: ITotalQuery): Promise<number> {
+  const query = {
+    ...match,
+    participants: { $elemMatch: { user: { $eq: meId } } },
+  };
   const count =
     (
       await this.aggregate([
@@ -116,7 +132,7 @@ messageSchema.statics.getMessageNumber = async function ({ meId, ...match }) {
           },
         },
         {
-          $match: match,
+          $match: query,
         },
         {
           $addFields: { meId },
@@ -141,8 +157,6 @@ messageSchema.statics.findMessage = async function ({
     conversation: conversationId,
     participants: { $elemMatch: { user: { $eq: meId } } },
   };
-
-  if (!conversationId) throw new CustomError(Errors.NO_PARAMS);
 
   const message =
     (
@@ -223,16 +237,16 @@ messageSchema.statics.deleteMessage = async function ({
 };
 
 messageSchema.statics.findMessages = async function (
-  { meId, skip, limit, conversationId }: IFindMessages,
-  additionalMatch?: any,
+  { meId, skip = 0, limit = 100, conversationId }: IBaseMessagesQuery,
+  additionalMatch?: IFindingMessagesAdditionalMatch,
   totalOptions?: IGettingMessageTotalOptions
 ): Promise<IMessagesGetting> {
-  const match = {
+  const match: IMessagesQuery = {
     participants: { $elemMatch: { user: { $eq: meId } } },
     ...additionalMatch,
   };
 
-  let totalQuery = { ...match, meId };
+  let totalQuery: ITotalQuery = { ...additionalMatch, meId };
   if (conversationId) {
     match.conversation = conversationId;
     totalQuery.conversation = conversationId;
@@ -242,7 +256,7 @@ messageSchema.statics.findMessages = async function (
     totalQuery = { meId, conversation: conversationId };
   }
 
-  const total = await this.getMessageNumber(totalQuery);
+  const total = await (this as IMessageModel).getMessageNumber(totalQuery);
   const messages = await this.aggregate([
     {
       $lookup: {
@@ -308,17 +322,18 @@ messageSchema.statics.findMessages = async function (
   ]);
   return { messages, total };
 };
+
 messageSchema.statics.findSeenMessages = async function ({
   meId,
   conversationId,
-  skip,
-  limit,
-}: IFindMessages): Promise<IMessagesGetting> {
-  const match = {
+  skip = 0,
+  limit = 100,
+}: IBaseMessagesQuery): Promise<IMessagesGetting> {
+  const match: IFindingMessagesAdditionalMatch = {
     usersSeenMessage: { $elemMatch: { user: { $eq: meId } } },
     $or: [{ sender: { $ne: meId } }, { contentType: Message.CONTENT_TYPE_NOTIFICATION }],
   };
-  const result = await this.findMessages(
+  const result = await (this as IMessageModel).findMessages(
     {
       meId,
       conversationId,
@@ -330,17 +345,18 @@ messageSchema.statics.findSeenMessages = async function ({
 
   return result as IMessagesGetting;
 };
+
 messageSchema.statics.findUnseenMessages = async function ({
   meId,
   conversationId,
-  skip,
-  limit,
-}: IFindMessages): Promise<IMessagesGetting> {
-  const match = {
-    'usersSeenMessage.user': { $ne: meId },
+  skip = 0,
+  limit = 100,
+}: IBaseMessagesQuery): Promise<IMessagesGetting> {
+  const match: IFindingMessagesAdditionalMatch = {
+    usersSeenMessage: { $elemMatch: { user: { $ne: meId } } },
     $or: [{ sender: { $ne: meId } }, { contentType: Message.CONTENT_TYPE_NOTIFICATION }],
   };
-  const result = await this.findMessages(
+  const result = await (this as IMessageModel).findMessages(
     {
       meId,
       conversationId,
@@ -353,10 +369,10 @@ messageSchema.statics.findUnseenMessages = async function ({
 };
 
 messageSchema.statics.findMessagesByIds = async function (
-  { meId, skip, limit, messageIds, conversationId }: IFindMessagesByIds,
+  { meId, skip = 0, limit = 100, messageIds = [], conversationId }: IMessagesQueryByIds,
   totalOptions?: IGettingMessageTotalOptions
 ): Promise<IMessagesGetting> {
-  const result = await this.findMessages(
+  const result = await (this as IMessageModel).findMessages(
     {
       meId,
       conversationId,

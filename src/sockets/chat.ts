@@ -27,7 +27,7 @@ const chat = (httpServer: http.Server): socketIO.Server => {
       try {
         let conversation = {} as IConversation;
         if (!conversationId && addresseeIds.length) {
-          conversation = await ConversationModel.findConversationByMembers({
+          conversation = await ConversationModel.findConversation({
             meId: callerId,
             members: [...addresseeIds, callerId],
           });

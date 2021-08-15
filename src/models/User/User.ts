@@ -13,18 +13,25 @@ import {
   IUserVerification,
 } from 'types/user';
 
-export const UserVerificationModel = model(
-  'user_verifications',
-  new Schema<IUserVerification>({
-    _id: String,
-    registryToken: String,
-    isVerified: {
-      type: Boolean,
-      required: true,
-      default: false,
-    },
-  })
-);
+const userVerificationSchema = new Schema<IUserVerification>({
+  _id: String,
+  registryToken: String,
+  isVerified: {
+    type: Boolean,
+    required: true,
+    default: false,
+  },
+});
+
+userVerificationSchema.pre('save', function (): void {
+  if (!this._id) {
+    this._id = new Types.ObjectId().toString();
+  }
+  if (typeof this._id === 'object') {
+    this._id = this._id.toString();
+  }
+});
+export const UserVerificationModel = model('user_verifications', userVerificationSchema);
 
 const userSchema = new Schema<IDetailUser>({
   _id: String,
@@ -43,7 +50,7 @@ const userSchema = new Schema<IDetailUser>({
     ref: 'user_statics',
     required: false,
   },
-  createdAt: { type: Date, required: true },
+  createdAt: { type: Date, default: new Date() },
 });
 
 userSchema.pre('save', function (): void {
@@ -171,18 +178,14 @@ userSchema.statics.findUser = async function ({
           },
         },
         {
-          $addFields: {
-            id: '$_id',
-          },
-        },
-        {
           $project: {
-            password: 0,
-            friendships: 0,
-            createdAt: 0,
             _id: 0,
-            verification: 0,
-            __v: 0,
+            id: '$_id',
+            userName: '$userName',
+            email: '$email',
+            avatar: '$avatar',
+            online: '$online',
+            friendship: '$friendship',
           },
         },
       ])
@@ -194,28 +197,35 @@ userSchema.statics.findUsers = async function ({
   meId,
   userIds,
   keyword,
-  limit,
-  skip,
+  limit = 100,
+  skip = 0,
 }: {
   meId: string;
-  userIds: Array<string>;
-  keyword: string;
+  userIds?: Array<string>;
+  keyword?: string;
   limit?: number;
   skip?: number;
 }): Promise<Array<IUser>> {
   const users = await this.aggregate([
     {
       $match: {
-        $and: [
-          { _id: { $ne: meId } },
-          {
-            $or: [
-              { _id: { $in: userIds } },
-              { userName: { $regex: keyword, $options: 'i' } },
-              { email: { $regex: keyword, $options: 'i' } },
-            ],
-          },
-        ],
+        $expr: {
+          $and: [
+            { $ne: ['$_id', meId] },
+            {
+              $cond: [
+                { $ne: [userIds, undefined] },
+                { $in: ['$_id', userIds] },
+                {
+                  $or: [
+                    { $regexMatch: { input: '$userName', regex: keyword, options: 'i' } },
+                    { $regexMatch: { input: '$email', regex: keyword, options: 'i' } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
       },
     },
     {
@@ -264,12 +274,13 @@ userSchema.statics.findUsers = async function ({
     },
     {
       $project: {
-        password: 0,
-        friendships: 0,
-        createdAt: 0,
         _id: 0,
-        verification: 0,
-        __v: 0,
+        id: '$_id',
+        userName: '$userName',
+        email: '$email',
+        avatar: '$avatar',
+        online: '$online',
+        friendship: '$friendship',
       },
     },
     { $skip: skip },
@@ -371,6 +382,15 @@ userStaticSchema.statics.updateIcon = async function ({
   );
   return updatedUserStatic;
 };
+
+userStaticSchema.pre('save', function (): void {
+  if (!this._id) {
+    this._id = new Types.ObjectId().toString();
+  }
+  if (typeof this._id === 'object') {
+    this._id = this._id.toString();
+  }
+});
 
 export const UserStaticModel = model<IUserStatic, IUserStaticModel>(
   'user_statics',

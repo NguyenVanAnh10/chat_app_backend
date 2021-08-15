@@ -11,21 +11,16 @@ interface IConversation {
 interface IConversationModel extends Model<IConversation> {
   existsConversation(userIds: Array<string>): Promise<boolean>;
   findConversations({ meId }: { meId: string }): Promise<Array<IConversation>>;
-  findConversationByMembers({ meId, members }): Promise<IConversation>;
-  findConversation({ meId, conversationId }): Promise<IConversation>;
-  createConversation({
-    meId,
-    name,
-    socketIO,
-    userIds,
-  }: {
+  findConversation(query: { meId: string; conversationId?: string }): Promise<IConversation>;
+  findConversation(query: { meId: string; members?: Array<string> }): Promise<IConversation>;
+  createConversation(query: {
     meId: string;
     name?: string;
     socketIO: Server;
     userIds: Array<string>;
   }): Promise<IConversation>;
   updateConversation(
-    { meId, conversationId }: { meId: string; conversationId: string },
+    query: { meId: string; conversationId: string },
     data: { name: string }
   ): Promise<IConversation>;
 }

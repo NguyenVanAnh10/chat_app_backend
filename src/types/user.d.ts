@@ -1,11 +1,14 @@
 import { Model } from 'mongoose';
 
+import type { IFriendship } from './friendship';
+
 interface IUser {
   id: string;
   userName: string;
   email: string;
   online?: boolean;
   avatar?: string;
+  friendship?: IFriendship;
 }
 
 interface IUserVerification {
@@ -17,17 +20,17 @@ interface IUserVerification {
 interface IDetailUser {
   id: string;
   userName: string;
-  password: string;
   email: string;
   avatar: string;
   online: boolean;
-  verification: string;
-  createdAt: Date;
+  password?: string;
+  createdAt?: Date;
+  verification?: string;
   static?: string;
   statics?: IUserStatic;
   verificationRef?: PopulatedDoc<IUserVerification & Document>;
-  validatePassword(password: string): Promise<boolean>;
-  setPassword(password: string): Promise<void>;
+  validatePassword?(password: string): Promise<boolean>;
+  setPassword?(password: string): Promise<void>;
 }
 
 interface IDecodeToken {
@@ -52,17 +55,16 @@ interface IDetailUserModel extends Model<IDetailUser> {
   findUser({ meId, userId }: { meId: string; userId: string }): Promise<IUser>;
   findUsers({
     meId,
-    userIds,
     keyword,
     limit,
     skip,
   }: {
     meId: string;
-    userIds: Array<string>;
     keyword: string;
     limit?: number;
     skip?: number;
   }): Promise<Array<IUser>>;
+  findUsers({ meId, userIds }: { meId: string; userIds: Array<string> }): Promise<Array<IUser>>;
   existsUsers(userIds: Array<string>): Promise<boolean>;
   findMe(meId: string): Promse<IDetailUser>;
 }

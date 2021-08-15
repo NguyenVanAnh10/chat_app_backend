@@ -13,7 +13,16 @@ const conversationSchema = new Schema<IConversation>({
     ref: 'users',
     required: true,
   },
-  createdAt: Date,
+  createdAt: { type: Date, default: new Date() },
+});
+
+conversationSchema.pre('save', function (): void {
+  if (!this._id) {
+    this._id = new Types.ObjectId().toString();
+  }
+  if (typeof this._id === 'object') {
+    this._id = this._id.toString();
+  }
 });
 
 conversationSchema.virtual('creatorRef', {
@@ -41,19 +50,63 @@ conversationSchema.statics.updateConversation = async function (
   return conversation;
 };
 
+interface IFindConversation {
+  user: string;
+  conversation?: string;
+  members?: Array<string>;
+}
+
 conversationSchema.statics.findConversation = async function ({
   meId,
   conversationId,
+  members,
 }: {
   meId: string;
-  conversationId: string;
+  conversationId?: string;
+  members?: Array<string>;
 }): Promise<IConversation> {
+  const match: IFindConversation = { user: meId };
+  let additionalMatch = [];
+  if (conversationId) match.conversation = conversationId;
+  if (members) {
+    additionalMatch = [
+      {
+        $addFields: {
+          memberIds: {
+            $map: {
+              input: '$members',
+              as: 'member',
+              in: '$$member._id',
+            },
+          },
+        },
+      },
+      {
+        $set: {
+          memberIds: {
+            $function: {
+              body(memberIds: Array<string>) {
+                return memberIds.sort();
+              },
+              args: ['$memberIds'],
+              lang: 'js',
+            },
+          },
+        },
+      },
+      {
+        $match: {
+          $expr: {
+            $eq: ['$memberIds', members.sort()],
+          },
+        },
+      },
+    ];
+  }
+
   const conversation = await ParticipantModel.aggregate([
     {
-      $match: {
-        user: meId,
-        conversation: conversationId,
-      },
+      $match: match,
     },
     {
       $lookup: {
@@ -96,6 +149,7 @@ conversationSchema.statics.findConversation = async function ({
     {
       $replaceWith: '$conversations',
     },
+    ...additionalMatch,
     {
       $project: {
         id: '$_id',
@@ -200,129 +254,17 @@ conversationSchema.statics.findConversations = async function ({
   return conversations;
 };
 
-conversationSchema.statics.findConversationByMembers = async function ({
-  meId,
-  members,
-}: {
-  meId: string;
-  members: Array<string>;
-}): Promise<IConversation> {
-  const conversation = await ParticipantModel.aggregate([
-    {
-      $match: {
-        user: meId,
-      },
-    },
-    {
-      $lookup: {
-        from: 'participants',
-        localField: 'conversation',
-        foreignField: 'conversation',
-        as: 'participantsRef',
-      },
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: 'participantsRef.user',
-        foreignField: '_id',
-        as: 'members',
-      },
-    },
-    {
-      $lookup: {
-        from: 'conversations',
-        localField: 'conversation',
-        foreignField: '_id',
-        as: 'conversationRef',
-      },
-    },
-    {
-      $replaceRoot: {
-        newRoot: { $mergeObjects: ['$$ROOT', { $arrayElemAt: ['$conversationRef', 0] }] },
-      },
-    },
-    {
-      $group: {
-        _id: '$user',
-        conversations: { $push: '$$ROOT' },
-      },
-    },
-    {
-      $unwind: '$conversations',
-    },
-    {
-      $replaceWith: '$conversations',
-    },
-    {
-      $addFields: {
-        memberIds: {
-          $map: {
-            input: '$members',
-            as: 'member',
-            in: '$$member._id',
-          },
-        },
-      },
-    },
-    {
-      $project: {
-        id: '$_id',
-        _id: 0,
-        name: '$name',
-        creator: '$creator',
-        createdAt: '$createdAt',
-        members: {
-          $map: {
-            input: '$members',
-            as: 'row',
-            in: {
-              id: '$$row._id',
-              userName: '$$row.userName',
-              email: '$$row.email',
-              avatar: '$$row.avatar',
-              online: '$$row.online',
-            },
-          },
-        },
-        memberIds: '$memberIds',
-      },
-    },
-    {
-      $set: {
-        memberIds: {
-          $function: {
-            body(memberIds: Array<string>) {
-              return memberIds.sort();
-            },
-            args: ['$memberIds'],
-            lang: 'js',
-          },
-        },
-      },
-    },
-    {
-      $match: {
-        $expr: {
-          $eq: ['$memberIds', members.sort()],
-        },
-      },
-    },
-  ]);
-  return <IConversation>(conversation[0] || {});
-};
-
 conversationSchema.statics.existsConversation = async function (
   userIds: Array<string>
 ): Promise<boolean> {
   const existed = (
-    await this.aggregate([
+    await ParticipantModel.aggregate([
       { $sort: { user: 1 } },
       { $group: { _id: '$conversation', users: { $push: '$user' } } },
       { $match: { users: { $eq: userIds.sort() } } },
     ])
   )[0];
-  return existed;
+  return !!existed;
 };
 
 conversationSchema.statics.createConversation = async function ({

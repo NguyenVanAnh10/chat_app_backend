@@ -3,18 +3,27 @@ import { Request, Response } from 'express';
 import UserModel from 'models/User';
 import CustomError, { Errors } from 'entities/CustomError';
 import { sendTokenConfirmationEmail } from 'ulties/email';
+import { IUser } from 'types/user';
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { keyword = '', userIds = '', limit = 100, skip = 0 } = req.query;
+    const { keyword = '', userIds = '', limit, skip } = req.query;
     const meId = req.app.get('meId');
-    const users = await UserModel.findUsers({
-      meId,
-      keyword: keyword as string,
-      userIds: (userIds as string).split(',').filter(i => !!i),
-      limit: Number.parseInt(limit as string, 10),
-      skip: Number.parseInt(skip as string, 10),
-    });
+    let users: Array<IUser> = [];
+    if (userIds) {
+      users = await UserModel.findUsers({
+        meId,
+        userIds: (userIds as string).split(',').filter(i => !!i),
+      });
+    }
+    if (keyword) {
+      users = await UserModel.findUsers({
+        meId,
+        keyword: keyword as string,
+        limit: Number.parseInt(limit as string, 10),
+        skip: Number.parseInt(skip as string, 10),
+      });
+    }
 
     res.json(users);
   } catch (error) {

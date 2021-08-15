@@ -16,6 +16,7 @@ interface IMessage {
   conversation: string;
   contentType: ContentType;
   content: string;
+  usersSeen?: Array<string>;
   createdAt?: Date;
 }
 
@@ -33,32 +34,56 @@ interface IFindMessage {
   conversationId: string;
 }
 
-interface IFindMessages {
+interface IBaseMessagesQuery {
   meId: string;
   skip?: number;
   limit?: number;
   conversationId?: string;
 }
 
-interface IFindMessagesByIds extends IFindMessages {
+interface IMessagesQueryByIds extends IBaseMessagesQuery {
   messageIds: Array<string>;
 }
 
+interface IFindingMessagesAdditionalMatch {
+  // message's _id in message id array
+  _id?: { $in: Array<string> };
+  $or?: [{ sender: { $ne: string } }, { contentType: string }];
+  // $eq: get seen messages || $ne: get unseen messages
+  usersSeenMessage?: { $elemMatch: { user: { $eq?: string } | { $ne?: string } } };
+}
+
+interface IMessagesQuery extends IFindingMessagesAdditionalMatch {
+  participants?: { $elemMatch: { user: { $eq: string } } };
+  conversation?: string;
+}
+
+interface ITotalQuery extends IMessagesQuery {
+  meId: string;
+  conversation?: string;
+}
+
 interface IMessageModel extends Model<IMessage> {
+  getMessageNumber(query: ITotalQuery): Promise<number>;
   findMessages(
-    { meId, skip, limit, conversationId }: IFindMessages,
-    additionalMatch?: any,
+    { meId, skip, limit, conversationId }: IBaseMessagesQuery,
+    additionalMatch?: IFindingMessagesAdditionalMatch,
     totalOptions?: IGettingMessageTotalOptions
   ): Promise<IMessagesGetting>;
-  findSeenMessages({ meId, conversationId, skip, limit }: IFindMessages): Promise<IMessagesGetting>;
+  findSeenMessages({
+    meId,
+    conversationId,
+    skip,
+    limit,
+  }: IBaseMessagesQuery): Promise<IMessagesGetting>;
   findUnseenMessages({
     meId,
     conversationId,
     skip,
     limit,
-  }: IFindMessages): Promise<IMessagesGetting>;
+  }: IBaseMessagesQuery): Promise<IMessagesGetting>;
   findMessagesByIds(
-    { meId, skip, limit, messageIds, conversationId }: IFindMessagesByIds,
+    { meId, skip, limit, messageIds, conversationId }: IMessagesQueryByIds,
     totalOptions?: IGettingMessageTotalOptions
   ): Promise<IMessagesGetting>;
   findMessage({ meId, messageId, conversationId }: IFindMessage): Promise<IMessage>;

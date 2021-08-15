@@ -25,7 +25,7 @@ export const getConversation = async (req: Request, res: Response): Promise<void
     let conversation = {};
 
     if (members) {
-      conversation = await ConversationModel.findConversationByMembers({
+      conversation = await ConversationModel.findConversation({
         meId,
         members: members.split(',').filter(i => !!i),
       });

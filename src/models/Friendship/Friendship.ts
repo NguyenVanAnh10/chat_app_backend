@@ -1,64 +1,34 @@
-import { Schema, model, Model } from 'mongoose';
+import { Schema, model, Types } from 'mongoose';
+import { FriendshipStatus, IFriendship, IFriendshipModel } from 'types/friendship';
 import { IUser } from 'types/user';
-import schemaWrapper from 'ulties/schema';
 
-enum FriendshipStatus {
-  REQUESTED = 'REQUESTED',
-  ACCEPTED = 'ACCEPTED',
-  DECLINED = 'DECLINED',
-}
+const friendshipSchema = new Schema<IFriendship>({
+  _id: String,
+  requester: {
+    type: String,
+    required: true,
+  },
+  addressee: {
+    type: String,
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ['REQUESTED', 'ACCEPTED', 'DECLINED'],
+    default: 'REQUESTED',
+    required: true,
+  },
+  createdAt: { type: Date, default: new Date() },
+});
 
-interface IFriendship {
-  id: string;
-  requester: string;
-  addressee: string;
-  status: FriendshipStatus;
-  createdAt?: Date;
-  getFriendId(meId: string): string | null;
-}
-
-interface IFriendshipModel extends Model<IFriendship> {
-  findAddressees({ meId }: { meId: string }): Promise<Array<IUser>>;
-  findRequesters({ meId }: { meId: string }): Promise<Array<IUser>>;
-  getFriends(meId: string): Promise<Array<IUser>>;
-  getFriend({ meId, friendId }: { meId: string; friendId: string }): Promise<IUser>;
-  getFriend({ meId, friendshipId }: { meId: string; friendshipId: string }): Promise<IUser>;
-  getFriend({
-    meId,
-    friendId,
-    friendshipId,
-  }: {
-    meId: string;
-    friendId: string;
-    friendshipId: string;
-  }): Promise<IUser>;
-  updateFriendship(
-    friendshipId: string,
-    meId: string,
-    data: { status: FriendshipStatus }
-  ): Promise<IUser>;
-}
-
-const friendshipSchema = schemaWrapper(
-  new Schema<IFriendship>({
-    _id: String,
-    requester: {
-      type: String,
-      required: true,
-    },
-    addressee: {
-      type: String,
-      required: true,
-    },
-    status: {
-      type: String,
-      enum: ['REQUESTED', 'ACCEPTED', 'DECLINED'],
-      default: 'REQUESTED',
-      required: true,
-    },
-    createdAt: Date,
-  })
-);
+friendshipSchema.pre('save', function (): void {
+  if (!this._id) {
+    this._id = new Types.ObjectId().toString();
+  }
+  if (typeof this._id === 'object') {
+    this._id = this._id.toString();
+  }
+});
 
 friendshipSchema.virtual('requesterRef', {
   ref: 'users',
@@ -74,13 +44,13 @@ friendshipSchema.virtual('addresseeRef', {
   justOne: true,
 });
 
-friendshipSchema.methods.getFriendId = function getFriendId(meId: string): string | null {
+friendshipSchema.methods.getFriendId = function (meId: string): string | null {
   if (meId === this.requester) return this.addressee;
   if (meId === this.addressee) return this.requester;
   return null;
 };
 
-friendshipSchema.statics.findAddressees = async function findAddressees({
+friendshipSchema.statics.findAddressees = async function ({
   meId,
 }: {
   meId: string;
@@ -123,7 +93,7 @@ friendshipSchema.statics.findAddressees = async function findAddressees({
   return users;
 };
 
-friendshipSchema.statics.findRequesters = async function findRequesters({
+friendshipSchema.statics.findRequesters = async function ({
   meId,
 }: {
   meId: string;
@@ -166,9 +136,7 @@ friendshipSchema.statics.findRequesters = async function findRequesters({
   return users;
 };
 
-friendshipSchema.statics.getFriends = async function getFriends(
-  meId: string
-): Promise<Array<IUser>> {
+friendshipSchema.statics.getFriends = async function (meId: string): Promise<Array<IUser>> {
   const friends = await this.aggregate([
     {
       $match: {
@@ -239,7 +207,7 @@ friendshipSchema.statics.getFriends = async function getFriends(
   return friends;
 };
 
-friendshipSchema.statics.getFriend = async function getFriend({
+friendshipSchema.statics.getFriend = async function ({
   meId,
   friendId,
   friendshipId,
@@ -327,13 +295,13 @@ friendshipSchema.statics.getFriend = async function getFriend({
   return <IUser>friend;
 };
 
-friendshipSchema.statics.updateFriendship = async function updateFriendship(
+friendshipSchema.statics.updateFriendship = async function (
   friendshipId: string,
   meId: string,
   data: { status: FriendshipStatus }
 ): Promise<IUser> {
   await this.updateOne({ _id: friendshipId }, data);
-  const friend = await this.getFriend({ friendshipId, meId });
+  const friend = await (this as IFriendshipModel).getFriend({ friendshipId, meId });
   return friend;
 };
 
