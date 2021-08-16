@@ -15,7 +15,7 @@ export const getMe = async (req: Request, res: Response): Promise<void> => {
     res.json(me);
   } catch (error) {
     console.error(error);
-    res.status(401).json({ error });
+    res.status(401).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -28,7 +28,7 @@ export const putStaticMe = async (req: Request, res: Response): Promise<void> =>
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(401).json({ error });
+    res.status(401).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -62,6 +62,6 @@ export const putMe = async (req: Request, res: Response): Promise<void> => {
     res.json(me);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };

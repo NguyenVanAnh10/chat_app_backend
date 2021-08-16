@@ -8,6 +8,7 @@ export default class CustomError extends Error {
   constructor(error: CustmError) {
     super(error.message);
     this.name = error.name;
+    this.message = error.message;
   }
 }
 

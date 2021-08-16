@@ -20,15 +20,15 @@ export const getUsers = async (req: Request, res: Response): Promise<void> => {
       users = await UserModel.findUsers({
         meId,
         keyword: keyword as string,
-        limit: Number.parseInt(limit as string, 10),
-        skip: Number.parseInt(skip as string, 10),
+        limit: Number.parseInt(limit as string, 10) || 100,
+        skip: Number.parseInt(skip as string, 10) || 0,
       });
     }
 
     res.json(users);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -41,7 +41,7 @@ export const getUser = async (req: Request, res: Response): Promise<void> => {
     res.json(user);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -66,6 +66,6 @@ export const postUserRegistration = async (req: Request, res: Response): Promise
     res.json({});
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };

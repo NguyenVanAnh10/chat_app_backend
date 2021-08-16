@@ -32,7 +32,7 @@ describe('user services', () => {
     try {
       response = await request(app)
         .post('/api/v1/login')
-        .send({ userName: 'tester', password: '1' });
+        .send({ userName: 'test1', password: '1' });
       expect(response.status).toBe(200);
       expect(response.header['set-cookie']).toEqual(
         expect.arrayContaining([expect.stringMatching(/^user_token=/)])
@@ -61,7 +61,12 @@ describe('user services', () => {
         .send({ online: true })
         .set('Cookie', userToken);
       expect(response.status).toBe(200);
-      expect(response.body).toEqual(expect.objectContaining(me));
+      expect(response.body).toEqual(
+        expect.objectContaining({
+          id: expect.toBeString(),
+          online: expect.toBeBoolean(),
+        })
+      );
     } catch (error) {
       expect(response.body).toEqual(
         expect.objectContaining({

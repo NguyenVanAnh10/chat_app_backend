@@ -22,8 +22,8 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
     const query = {
       meId: meId as string,
       conversationId: conversationId as string,
-      skip: Number.parseInt(skip as string, 10),
-      limit: Number.parseInt(limit as string, 10),
+      skip: Number.parseInt(skip as string, 10) || 0,
+      limit: Number.parseInt(limit as string, 10) || 100,
     };
     if (messageIds) {
       const messageByIds = await MessageModel.findMessagesByIds(
@@ -43,7 +43,7 @@ export const getMessages = async (req: Request, res: Response): Promise<void> =>
     res.json(messages);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -60,7 +60,7 @@ export const getMessage = async (req: Request, res: Response): Promise<void> => 
     res.json(message);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -72,7 +72,7 @@ export const deleteMessage = async (req: Request, res: Response): Promise<void> 
     res.json({});
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -134,7 +134,7 @@ export const postMessage = async (req: Request, res: Response): Promise<void> =>
     res.json(message);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -153,7 +153,7 @@ export const getSeenMessages = async (req: Request, res: Response): Promise<void
     res.json(seenMessages);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -172,7 +172,7 @@ export const getUnseenMessages = async (req: Request, res: Response): Promise<vo
     res.json(unSeenMessages);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -202,6 +202,6 @@ export const postSeenMessages = async (req: Request, res: Response): Promise<voi
     res.json(result);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };

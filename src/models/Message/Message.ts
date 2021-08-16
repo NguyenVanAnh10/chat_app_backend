@@ -56,6 +56,16 @@ messageSchema.pre('save', function (): void {
   }
 });
 
+messageSchema.set('toJSON', {
+  virtuals: false,
+  versionKey: false,
+  transform(_, ret) {
+    ret.id = ret._id;
+    delete ret._id;
+    return ret;
+  },
+});
+
 messageSchema.virtual('senderRef', {
   ref: 'users',
   localField: 'sender',
@@ -330,7 +340,7 @@ messageSchema.statics.findSeenMessages = async function ({
   limit = 100,
 }: IBaseMessagesQuery): Promise<IMessagesGetting> {
   const match: IFindingMessagesAdditionalMatch = {
-    usersSeenMessage: { $elemMatch: { user: { $eq: meId } } },
+    usersSeen: meId,
     $or: [{ sender: { $ne: meId } }, { contentType: Message.CONTENT_TYPE_NOTIFICATION }],
   };
   const result = await (this as IMessageModel).findMessages(
@@ -353,7 +363,7 @@ messageSchema.statics.findUnseenMessages = async function ({
   limit = 100,
 }: IBaseMessagesQuery): Promise<IMessagesGetting> {
   const match: IFindingMessagesAdditionalMatch = {
-    usersSeenMessage: { $elemMatch: { user: { $ne: meId } } },
+    usersSeen: { $ne: meId },
     $or: [{ sender: { $ne: meId } }, { contentType: Message.CONTENT_TYPE_NOTIFICATION }],
   };
   const result = await (this as IMessageModel).findMessages(

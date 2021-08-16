@@ -9,7 +9,7 @@ export const getFriends = async (req: Request, res: Response): Promise<void> => 
     res.json(friends);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -22,6 +22,6 @@ export const getFriend = async (req: Request, res: Response): Promise<void> => {
     res.json(friend);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };

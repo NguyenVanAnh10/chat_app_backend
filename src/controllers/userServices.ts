@@ -10,12 +10,12 @@ export const putOnline = async (req: Request, res: Response): Promise<void> => {
     const meId = req.app.get('meId');
     const socketIO = req.app.get('socketio');
 
-    const data = req.body;
+    const { online } = req.body;
     const existMe = await UserModel.exists({ _id: meId });
 
     if (!existMe) throw new CustomError(Errors.USER_NOT_FOUND);
 
-    const me = await UserModel.findOneAndUpdate({ _id: meId }, data, { new: true });
+    const me = await UserModel.findOneAndUpdate({ _id: meId }, { online }, { new: true });
     const friendshipsList = await FriendshipModel.find({
       $or: [{ requester: meId }, { addressee: meId }],
     });
@@ -28,10 +28,10 @@ export const putOnline = async (req: Request, res: Response): Promise<void> => {
       );
     }
 
-    res.json(me);
+    res.json({ id: meId, online: me.online });
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -54,7 +54,7 @@ export const postLogin = async (req: Request, res: Response): Promise<void> => {
     res.json(detailMe);
   } catch (error) {
     console.error(error);
-    res.status(401).send({ error });
+    res.status(401).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -103,7 +103,7 @@ export const getValidateRegisteredEmail = async (req: Request, res: Response): P
     res.json({});
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -160,6 +160,6 @@ export const postResetPassword = async (req: Request, res: Response): Promise<vo
     res.json({});
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };

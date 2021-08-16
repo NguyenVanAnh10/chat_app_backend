@@ -38,7 +38,7 @@ const userSchema = new Schema<IDetailUser>({
   userName: { type: String, required: true },
   password: { type: String, default: null },
   email: { type: String, required: true },
-  avatar: { type: String, required: true, default: '' },
+  avatar: { type: String, default: '' },
   online: { type: Boolean, default: false },
   verification: {
     type: String,

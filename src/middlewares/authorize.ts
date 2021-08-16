@@ -12,7 +12,7 @@ const authorize = async (req: Request, res: Response, next: NextFunction): Promi
     next();
   } catch (error) {
     console.error(error);
-    res.status(401).json({ error });
+    res.status(401).json({ error: { name: error.name, message: error.message } });
   }
 };
 export default authorize;

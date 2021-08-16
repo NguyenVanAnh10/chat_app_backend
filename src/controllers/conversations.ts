@@ -13,7 +13,7 @@ export const getConversations = async (req: Request, res: Response): Promise<voi
     res.json(conversations);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -36,7 +36,7 @@ export const getConversation = async (req: Request, res: Response): Promise<void
     res.json(conversation);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -59,7 +59,7 @@ export const postConversation = async (req: Request, res: Response): Promise<voi
     res.json(conversation);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -80,7 +80,7 @@ export const putConversation = async (req: Request, res: Response): Promise<void
     res.json(conversation);
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };
 
@@ -101,6 +101,6 @@ export const deleteConversation = async (req: Request, res: Response): Promise<v
     res.json({});
   } catch (error) {
     console.error(error);
-    res.status(400).json({ error });
+    res.status(400).json({ error: { name: error.name, message: error.message } });
   }
 };

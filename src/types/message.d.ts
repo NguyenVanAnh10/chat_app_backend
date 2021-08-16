@@ -49,8 +49,8 @@ interface IFindingMessagesAdditionalMatch {
   // message's _id in message id array
   _id?: { $in: Array<string> };
   $or?: [{ sender: { $ne: string } }, { contentType: string }];
-  // $eq: get seen messages || $ne: get unseen messages
-  usersSeenMessage?: { $elemMatch: { user: { $eq?: string } | { $ne?: string } } };
+  // get seen messages || $ne: get unseen messages
+  usersSeen?: string | { $ne?: string };
 }
 
 interface IMessagesQuery extends IFindingMessagesAdditionalMatch {
