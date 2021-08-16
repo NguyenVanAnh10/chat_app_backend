@@ -1,23 +1,26 @@
 # This workflow will do a clean install of node dependencies, cache/restore them, build the source code and run tests across different versions of node
 # For more information see: https://help.github.com/actions/language-and-framework-guides/using-nodejs-with-github-actions
 
-name: Node.js CI
+name: Staging CI
 on:
   push:
-    branches: [master]
+    branches: [develop]
+  pull_request:
+    branches: [develop]
 jobs:
   build:
-    environment: production
+    environment: development
     runs-on: self-hosted
     strategy:
       matrix:
         node-version: [16.x]
         # See supported Node.js release schedule at https://nodejs.org/en/about/releases/
     env:
-      DB_NAME: alo_rice
+      DB_NAME: alo_rice_staging
       REGION: ap-southeast-1
       BUCKET_NAME: chat-app-alorice
-      CLIENT_HOST: https://alorice.xyz
+      CLIENT_HOST: https://dev.alorice.xyz
+      PORT: 5005
     steps:
       - uses: actions/checkout@v2
       - name: Use Node.js ${{ matrix.node-version }}
@@ -36,8 +39,9 @@ jobs:
           echo DB_NAME=${{ env.DB_NAME }} >> .env
           echo BUCKET_NAME=${{ env.BUCKET_NAME }} >> .env
           echo CLIENT_HOST=${{ env.CLIENT_HOST }} >> .env
+          echo PORT=${{ env.PORT }} >> .env
           cat .env
       - run: npm i
       - run: npm run build --if-present
-      - run: sudo cp -r dist/index.js .env node_modules /usr/share/nginx/alorice/production/backend
-      - run: sudo pm2 stop BackendAPI && sudo pm2 delete BackendAPI && sudo pm2 start --name=BackendAPI /usr/share/nginx/alorice/production/backend/index.js
+      - run: sudo cp -r dist/index.js .env node_modules /usr/share/nginx/alorice/staging/backend
+      - run: sudo pm2 stop BackendAPI_Staging && sudo pm2 delete BackendAPI_Staging && sudo pm2 start --name=BackendAPI_Staging /usr/share/nginx/alorice/staging/backend/index.js
