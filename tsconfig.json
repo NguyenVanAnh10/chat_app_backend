@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "es6",
+    "target": "es5",
+    "sourceMap": true,
+    "moduleResolution": "node",
+    "baseUrl": "src",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "outDir": "dist"
+  },
+  "include": ["./"],
+  "exclude": ["node_modules"]
+}

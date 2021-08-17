@@ -1,0 +1,20 @@
+{
+  "plugins": ["@typescript-eslint"],
+  "extends": ["airbnb-typescript/base", "plugin:@typescript-eslint/recommended", "prettier"],
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
+  "rules": {
+    "no-param-reassign": "warn",
+    "no-underscore-dangle": "warn",
+    "import/no-extraneous-dependencies": "warn"
+  },
+  "settings": {
+    "import/resolver": {
+      "node": {
+        "paths": "src"
+      }
+    }
+  }
+}
