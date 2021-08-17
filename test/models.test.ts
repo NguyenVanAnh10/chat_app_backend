@@ -20,7 +20,7 @@ describe('user', () => {
   it('get me', async () => {
     let me: IDetailUser;
     try {
-      me = await UserModel.findMe('60e97ea983157a63a7e7dc2e');
+      me = await UserModel.findMe('611a997d5da87213aa6ea0e9');
       const expectedMe: IDetailUser = {
         id: expect.toBeString(),
         userName: expect.toBeString(),
@@ -41,8 +41,8 @@ describe('user', () => {
     let user: IUser;
     try {
       user = await UserModel.findUser({
-        meId: '60e97ea983157a63a7e7dc2e',
-        userId: '60e9752d5ebf885abf9c39c8',
+        meId: '611a997d5da87213aa6ea0e9',
+        userId: '611a99e25da87213aa6ea10c',
       });
       const expectedUser: IUser = {
         id: expect.toBeString(),
@@ -63,10 +63,10 @@ describe('user', () => {
     try {
       // by userids
       users = await UserModel.findUsers({
-        meId: '60e97ea983157a63a7e7dc2e',
+        meId: '611a997d5da87213aa6ea0e9',
         userIds: [
-          '60fbfa5896337f59179fea61',
-          '60e97ea983157a63a7e7dc2e',
+          '611a997d5da87213aa6ea0e9',
+          '611a99e25da87213aa6ea10c',
           '60e9752d5ebf885abf9c39c8',
         ],
       });
@@ -85,7 +85,7 @@ describe('user', () => {
 
       // by keyword
       users = await UserModel.findUsers({
-        meId: '60e97ea983157a63a7e7dc2e',
+        meId: '611a997d5da87213aa6ea0e9',
         keyword: 'test',
       });
       expect(users).toEqual(
@@ -109,8 +109,8 @@ describe('user', () => {
     let existUsers: boolean;
     try {
       existUsers = await UserModel.existsUsers([
-        '60fbfa5896337f59179fea61',
-        '60e97ea983157a63a7e7dc2e',
+        '611a99e25da87213aa6ea10c',
+        '611a997d5da87213aa6ea0e9',
       ]);
       expect(existUsers).toBe(true);
     } catch (error) {
@@ -171,8 +171,8 @@ describe('conversation', () => {
     try {
       // by conversationId
       conversation = await ConversationModel.findConversation({
-        meId: '60e97ea983157a63a7e7dc2e',
-        conversationId: '6103d457cf9331585911b267',
+        meId: '611a997d5da87213aa6ea0e9',
+        conversationId: '611a9a535da87213aa6ea145',
       });
 
       if (conversation.name) {
@@ -202,7 +202,7 @@ describe('conversation', () => {
     let conversations: Array<IConversation>;
     try {
       conversations = await ConversationModel.findConversations({
-        meId: '60e97ea983157a63a7e7dc2e',
+        meId: '611a997d5da87213aa6ea0e9',
       });
 
       expect(conversations).toEqual(
@@ -251,7 +251,7 @@ describe('friendship', () => {
     try {
       const friendship = await FriendshipModel.findById('60eb2ce6bf4df83279a62183');
 
-      friendId = friendship && friendship.getFriendId('60e97ea983157a63a7e7dc2e');
+      friendId = friendship && friendship.getFriendId('611a997d5da87213aa6ea0e9');
       expect(friendId).toBeString();
     } catch (error) {
       expect(friendId).toBeNil();
@@ -274,7 +274,7 @@ describe('friendship', () => {
   it('find addressees', async () => {
     let addressees: Array<IUser>;
     try {
-      addressees = await FriendshipModel.findAddressees({ meId: '60e97ea983157a63a7e7dc2e' });
+      addressees = await FriendshipModel.findAddressees({ meId: '611a997d5da87213aa6ea0e9' });
       expect(addressees).toEqual(
         expect.arrayContaining([expect.objectContaining(expectedDetailFriend)])
       );
@@ -286,7 +286,7 @@ describe('friendship', () => {
   it('find requesters', async () => {
     let addressees: Array<IUser>;
     try {
-      addressees = await FriendshipModel.findRequesters({ meId: '60e97ea983157a63a7e7dc2e' });
+      addressees = await FriendshipModel.findRequesters({ meId: '611a997d5da87213aa6ea0e9' });
       expect(addressees).toEqual(
         expect.arrayContaining([expect.objectContaining(expectedDetailFriend)])
       );
@@ -298,7 +298,7 @@ describe('friendship', () => {
   it('get friends', async () => {
     let friends: Array<IUser>;
     try {
-      friends = await FriendshipModel.getFriends('60e97ea983157a63a7e7dc2e');
+      friends = await FriendshipModel.getFriends('611a997d5da87213aa6ea0e9');
       const expectedFriend = { ...expectedDetailFriend };
       delete expectedFriend.friendship;
       expect(friends).toEqual(expect.arrayContaining([expect.objectContaining(expectedFriend)]));
@@ -311,7 +311,7 @@ describe('friendship', () => {
     let friend: IUser;
     try {
       friend = await FriendshipModel.getFriend({
-        meId: '60e97ea983157a63a7e7dc2e',
+        meId: '611a997d5da87213aa6ea0e9',
         friendId: '60e9752d5ebf885abf9c39c8',
       });
 
@@ -327,7 +327,7 @@ describe('friendship', () => {
 describe('message', () => {
   it('get message number', async () => {
     const messageNumber = await MessageModel.getMessageNumber({
-      meId: '6114a091defee345c4876aa4',
+      meId: '611a997d5da87213aa6ea0e9',
       conversation: '6114a34717aa2d52fd397ab5',
     });
     expect(messageNumber).toBeNumber();
@@ -347,8 +347,8 @@ describe('message', () => {
     let message: IMessage;
     try {
       message = await MessageModel.findMessage({
-        meId: '60ea6fbc5d45552b382ec3c9',
-        conversationId: '60f8261e6d07aa254a7cfa5e',
+        meId: '611a997d5da87213aa6ea0e9',
+        conversationId: '611a9a535da87213aa6ea145',
         messageId: '60f826276d07aa254a7cfa68',
       });
       expect(message).toEqual(expect.objectContaining(expectedMessage));
@@ -361,8 +361,8 @@ describe('message', () => {
     let result: IMessagesGetting;
     try {
       result = await MessageModel.findMessages({
-        meId: '61191e3d7ffdb5297cd15149',
-        conversationId: '611923dcffbcd839801b0ce2',
+        meId: '611a997d5da87213aa6ea0e9',
+        conversationId: '611a9a535da87213aa6ea145',
       });
       expect(result).toEqual({
         total: expect.toBeNumber(),
@@ -377,8 +377,8 @@ describe('message', () => {
     let result: IMessagesGetting;
     try {
       result = await MessageModel.findSeenMessages({
-        meId: '60e97ea983157a63a7e7dc2e',
-        conversationId: '6104aea71728262e647fbacd',
+        meId: '611a997d5da87213aa6ea0e9',
+        conversationId: '611a9a535da87213aa6ea145',
       });
       expect(result).toEqual({
         total: expect.toBeNumber(),
@@ -393,8 +393,8 @@ describe('message', () => {
     let result: IMessagesGetting;
     try {
       result = await MessageModel.findUnseenMessages({
-        meId: '61191e3d7ffdb5297cd15149',
-        conversationId: '611923dcffbcd839801b0ce2',
+        meId: '611a997d5da87213aa6ea0e9',
+        conversationId: '611a9a535da87213aa6ea145',
       });
 
       expect(result).toEqual({
@@ -411,9 +411,9 @@ describe('message', () => {
     try {
       result = await MessageModel.findMessagesByIds(
         {
-          meId: '6119222995246e372b4b08d1',
-          messageIds: ['6119354bb0afd9524bd26251'],
-          conversationId: '611923dcffbcd839801b0ce2',
+          meId: '611a997d5da87213aa6ea0e9',
+          messageIds: ['611b1cca5da87213aa6ea39a', '611a9a5e5da87213aa6ea157'],
+          conversationId: '611a9a535da87213aa6ea145',
         },
         { byConversation: true }
       );
