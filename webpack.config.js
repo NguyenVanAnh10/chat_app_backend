@@ -1,6 +1,7 @@
 const path = require('path');
 const nodeExternals = require('webpack-node-externals');
 const { SourceMapDevToolPlugin } = require('webpack');
+const Dotenv = require('dotenv-webpack');
 
 const config = {
   entry: './src/index.ts',
@@ -14,6 +15,7 @@ const config = {
     modules: ['src'],
     extensions: ['.ts', '.js'],
   },
+  plugins: [new Dotenv()],
   module: {
     rules: [
       {
