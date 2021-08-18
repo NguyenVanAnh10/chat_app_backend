@@ -44,5 +44,5 @@ jobs:
       - run: npm i
       - run: npm run test
       - run: npm run build --if-present
-      - run: sudo cp -r dist/index.js .env node_modules /usr/share/nginx/alorice/staging/backend
+      - run: sudo cp -r dist/index.js node_modules /usr/share/nginx/alorice/staging/backend
       - run: sudo pm2 stop BackendAPI_Staging && sudo pm2 delete BackendAPI_Staging && sudo pm2 start --name=BackendAPI_Staging /usr/share/nginx/alorice/staging/backend/index.js
