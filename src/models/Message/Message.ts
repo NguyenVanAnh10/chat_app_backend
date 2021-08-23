@@ -44,7 +44,7 @@ const messageSchema = new Schema<IMessage>({
     required: true,
   },
   content: String,
-  createdAt: { type: Date, default: new Date() },
+  createdAt: { type: Date, default: Date.now },
 });
 
 messageSchema.pre('save', function (): void {

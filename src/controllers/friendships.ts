@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 
 import CustomError, { Errors } from 'entities/CustomError';
 import FriendshipModel from 'models/Friendship';
+import ConversationModel from 'models/Conversation';
 
 export const postFriendship = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -38,16 +39,22 @@ export const putFriendship = async (req: Request, res: Response): Promise<void> 
     const { status } = req.body;
     const { friendshipId } = req.params;
     const friendship = await FriendshipModel.findById(friendshipId);
-    const meId = req.app.get('meId');
+    const meId = req.app.get('meId') as string;
 
     if (!friendship) throw new CustomError(Errors.FRIENDSHIP_NO_EXIST);
     if (friendship.status === status) throw new CustomError(Errors.FRIENDSHIP_UPDATED);
     friendship.status = status;
     await friendship.save();
-    const friend = await FriendshipModel.getFriend({ meId, friendshipId });
+
+    const friendId = friendship.getFriendId(meId);
     if (status === 'ACCEPTED') {
-      req.app.get('socketio').to(friend.id).emit('accept_friend_request', { friendId: meId });
+      await ConversationModel.createConversation({
+        meId,
+        userIds: [friendId],
+      });
+      req.app.get('socketio').to(friendId).emit('accept_friend_request', { friendId: meId });
     }
+    const friend = await FriendshipModel.getFriend({ meId, friendshipId });
 
     res.json(friend);
   } catch (error) {

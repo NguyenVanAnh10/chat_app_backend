@@ -9,6 +9,7 @@ import UserModel from 'models/User';
 import { IDetailUser, IUser } from 'types/user';
 import { IConversation } from 'types/conversation';
 import { IMessage, IMessagesGetting } from 'types/message';
+import { IFriend } from 'types/friendship';
 
 initDatabase();
 afterAll(async () => {
@@ -258,12 +259,13 @@ describe('friendship', () => {
     }
   });
 
-  const expectedDetailFriend: IUser = {
+  const expectedDetailFriend: IFriend = {
     id: expect.toBeString(),
     userName: expect.toBeString(),
     email: expect.toBeString(),
     avatar: expect.toBeString(),
     online: expect.toBeBoolean(),
+    conversation: expect.toBeString(),
     friendship: expect.objectContaining({
       id: expect.toBeString(),
       requester: expect.toBeString(),
@@ -272,7 +274,7 @@ describe('friendship', () => {
     }),
   };
   it('find addressees', async () => {
-    let addressees: Array<IUser>;
+    let addressees: Array<IFriend>;
     try {
       addressees = await FriendshipModel.findAddressees({ meId: '611a997d5da87213aa6ea0e9' });
       expect(addressees).toEqual(
@@ -284,7 +286,7 @@ describe('friendship', () => {
   });
 
   it('find requesters', async () => {
-    let addressees: Array<IUser>;
+    let addressees: Array<IFriend>;
     try {
       addressees = await FriendshipModel.findRequesters({ meId: '611a997d5da87213aa6ea0e9' });
       expect(addressees).toEqual(
@@ -307,14 +309,27 @@ describe('friendship', () => {
     }
   });
 
-  it('get friend', async () => {
-    let friend: IUser;
+  it('get friend by friendId', async () => {
+    let friend: IFriend;
     try {
       friend = await FriendshipModel.getFriend({
-        meId: '611a997d5da87213aa6ea0e9',
-        friendId: '60e9752d5ebf885abf9c39c8',
+        meId: '6119222995246e372b4b08d1',
+        friendId: '61191e3d7ffdb5297cd15149',
       });
 
+      expect(friend).toEqual(expect.objectContaining(expectedDetailFriend));
+    } catch (error) {
+      expect(friend).toEqual({});
+    }
+  });
+
+  it('get friend by friendshipId', async () => {
+    let friend: IFriend;
+    try {
+      friend = await FriendshipModel.getFriend({
+        meId: '6119222995246e372b4b08d1',
+        friendshipId: '6119235affbcd839801b0cbc',
+      });
       expect(friend).toEqual(expect.objectContaining(expectedDetailFriend));
     } catch (error) {
       expect(friend).toEqual({});

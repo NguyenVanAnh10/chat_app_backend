@@ -78,7 +78,7 @@ export const deleteMessage = async (req: Request, res: Response): Promise<void> 
 
 export const postMessage = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { conversationId, friendId, base64Image, contentType, ...rest } = req.body;
+    const { conversationId, friendId, base64Image, contentType, content } = req.body;
     const meId = req.app.get('meId') as string;
 
     const existedConversation = await ParticipantModel.exists({
@@ -107,7 +107,6 @@ export const postMessage = async (req: Request, res: Response): Promise<void> =>
         message = await MessageModel.create({
           conversation: conversationId || conversation.id,
           contentType,
-          ...rest,
           sender: meId,
           content: imageUrl,
         });
@@ -116,7 +115,7 @@ export const postMessage = async (req: Request, res: Response): Promise<void> =>
         message = await MessageModel.create({
           conversation: conversationId || conversation.id,
           contentType,
-          ...rest,
+          content,
           sender: meId,
         });
         break;

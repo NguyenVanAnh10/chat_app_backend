@@ -15,9 +15,9 @@ interface IConversationModel extends Model<IConversation> {
   findConversation(query: { meId: string; members?: Array<string> }): Promise<IConversation>;
   createConversation(query: {
     meId: string;
-    name?: string;
-    socketIO: Server;
     userIds: Array<string>;
+    name?: string;
+    socketIO?: Server;
   }): Promise<IConversation>;
   updateConversation(
     query: { meId: string; conversationId: string },

@@ -7,6 +7,10 @@ declare enum FriendshipStatus {
   DECLINED = 'DECLINED',
 }
 
+interface IFriend extends IUser {
+  conversation: string;
+}
+
 interface IFriendship {
   id: string;
   requester: string;
@@ -17,20 +21,11 @@ interface IFriendship {
 }
 
 interface IFriendshipModel extends Model<IFriendship> {
-  findAddressees({ meId }: { meId: string }): Promise<Array<IUser>>;
-  findRequesters({ meId }: { meId: string }): Promise<Array<IUser>>;
-  getFriends(meId: string): Promise<Array<IUser>>;
-  getFriend({ meId, friendId }: { meId: string; friendId: string }): Promise<IUser>;
-  getFriend({ meId, friendshipId }: { meId: string; friendshipId: string }): Promise<IUser>;
-  getFriend({
-    meId,
-    friendId,
-    friendshipId,
-  }: {
-    meId: string;
-    friendId: string;
-    friendshipId: string;
-  }): Promise<IUser>;
+  findAddressees({ meId }: { meId: string }): Promise<Array<IFriend>>;
+  findRequesters({ meId }: { meId: string }): Promise<Array<IFriend>>;
+  getFriends(meId: string): Promise<Array<IFriend>>;
+  getFriend(query: { meId: string; friendId: string }): Promise<IFriend>;
+  getFriend(query: { meId: string; friendshipId: string }): Promise<IFriend>;
   updateFriendship(
     friendshipId: string,
     meId: string,
