@@ -178,15 +178,54 @@ conversationSchema.statics.findConversation = async function ({
 
 conversationSchema.statics.findConversations = async function ({
   meId,
+  hasMessage = false,
 }: {
   meId: string;
+  hasMessage?: boolean;
 }): Promise<Array<IConversation>> {
+  const match = hasMessage
+    ? [
+        {
+          $lookup: {
+            from: 'messages',
+            localField: 'conversation',
+            foreignField: 'conversation',
+            as: 'messages',
+          },
+        },
+        {
+          $match: {
+            $expr: {
+              $ne: [{ $size: '$messages' }, 0],
+            },
+          },
+        },
+      ]
+    : [
+        {
+          $lookup: {
+            from: 'messages',
+            localField: 'conversation',
+            foreignField: 'conversation',
+            as: 'messages',
+          },
+        },
+        {
+          $match: {
+            $expr: {
+              $eq: [{ $size: '$messages' }, 0],
+            },
+          },
+        },
+      ];
+
   const conversations = await ParticipantModel.aggregate([
     {
       $match: {
         user: meId,
       },
     },
+    ...match,
     {
       $lookup: {
         from: 'participants',

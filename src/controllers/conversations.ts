@@ -5,11 +5,13 @@ import ConversationModel from 'models/Conversation';
 import UserModel from 'models/User/User';
 import MessageModel from 'models/Message';
 import CustomError, { Errors } from 'entities/CustomError';
+import Message from 'entities/Message';
+import Notification from 'entities/Notification';
 
 export const getConversations = async (req: Request, res: Response): Promise<void> => {
   try {
     const meId = req.app.get('meId');
-    const conversations = await ConversationModel.findConversations({ meId });
+    const conversations = await ConversationModel.findConversations({ meId, hasMessage: true });
     res.json(conversations);
   } catch (error) {
     console.error(error);
@@ -56,6 +58,16 @@ export const postConversation = async (req: Request, res: Response): Promise<voi
       userIds,
       socketIO: req.app.get('socketio'),
     });
+    await Promise.all(
+      userIds.map((id: string) =>
+        MessageModel.create({
+          conversation: conversation.id,
+          contentType: Message.CONTENT_TYPE_NOTIFICATION,
+          content: `${Notification.NOTIFICATION_MEMBER_ADDITION}-${id}`,
+          sender: meId,
+        })
+      )
+    );
     res.json(conversation);
   } catch (error) {
     console.error(error);

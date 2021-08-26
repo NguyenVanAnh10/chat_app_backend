@@ -129,6 +129,7 @@ export const postMessage = async (req: Request, res: Response): Promise<void> =>
         senderId: message.sender,
         messageId: message.id,
         messageContentType: message.contentType,
+        messageContent: message.content,
       });
     res.json(message);
   } catch (error) {
