@@ -19,7 +19,7 @@ const participantSchema = new Schema<IParticipant>({
     ref: 'conversations',
     required: true,
   },
-  createdAt: { type: Date, default: new Date() },
+  createdAt: { type: Date, default: Date.now },
 });
 
 participantSchema.pre('save', function (): void {

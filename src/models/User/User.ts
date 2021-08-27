@@ -50,7 +50,7 @@ const userSchema = new Schema<IDetailUser>({
     ref: 'user_statics',
     required: false,
   },
-  createdAt: { type: Date, default: new Date() },
+  createdAt: { type: Date, default: Date.now },
 });
 
 userSchema.pre('save', function (): void {

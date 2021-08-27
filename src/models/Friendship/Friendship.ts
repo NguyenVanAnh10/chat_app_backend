@@ -1,5 +1,7 @@
 import { Schema, model, Types } from 'mongoose';
-import { FriendshipStatus, IFriendship, IFriendshipModel } from 'types/friendship';
+
+import ConversationModel from 'models/Conversation';
+import { FriendshipStatus, IFriend, IFriendship, IFriendshipModel } from 'types/friendship';
 import { IUser } from 'types/user';
 
 const friendshipSchema = new Schema<IFriendship>({
@@ -18,7 +20,7 @@ const friendshipSchema = new Schema<IFriendship>({
     default: 'REQUESTED',
     required: true,
   },
-  createdAt: { type: Date, default: new Date() },
+  createdAt: { type: Date, default: Date.now },
 });
 
 friendshipSchema.pre('save', function (): void {
@@ -136,7 +138,7 @@ friendshipSchema.statics.findRequesters = async function ({
   return users;
 };
 
-friendshipSchema.statics.getFriends = async function (meId: string): Promise<Array<IUser>> {
+friendshipSchema.statics.getFriends = async function (meId: string): Promise<Array<IFriend>> {
   const friends = await this.aggregate([
     {
       $match: {
@@ -152,13 +154,7 @@ friendshipSchema.statics.getFriends = async function (meId: string): Promise<Arr
     },
     {
       $addFields: {
-        me: {
-          $cond: {
-            if: { $eq: ['$requester', meId] },
-            then: '$requester',
-            else: '$addressee',
-          },
-        },
+        me: meId,
         friend: {
           $cond: {
             if: { $ne: ['$requester', meId] },
@@ -204,7 +200,12 @@ friendshipSchema.statics.getFriends = async function (meId: string): Promise<Arr
     { $replaceWith: '$friends' },
   ]);
 
-  return friends;
+  return Promise.all(
+    friends.map(async friend => {
+      const conversation = await ConversationModel.findConversation({ meId, members: [friend.id] });
+      return { ...friend, conversation: conversation.id || '' };
+    })
+  );
 };
 
 friendshipSchema.statics.getFriend = async function ({
@@ -213,9 +214,9 @@ friendshipSchema.statics.getFriend = async function ({
   friendshipId,
 }: {
   meId: string;
-  friendId: any;
-  friendshipId: any;
-}): Promise<IUser> {
+  friendshipId?: string;
+  friendId?: string;
+}): Promise<IFriend> {
   let match = {};
   if (friendId) {
     match = {
@@ -292,7 +293,8 @@ friendshipSchema.statics.getFriend = async function ({
         },
       ])
     )[0] || {};
-  return <IUser>friend;
+  const conversation = await ConversationModel.findConversation({ meId, members: [friend.id] });
+  return <IFriend>(friend.id ? { ...friend, conversation: conversation.id || '' } : {});
 };
 
 friendshipSchema.statics.updateFriendship = async function (

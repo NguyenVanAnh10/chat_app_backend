@@ -13,7 +13,7 @@ const conversationSchema = new Schema<IConversation>({
     ref: 'users',
     required: true,
   },
-  createdAt: { type: Date, default: new Date() },
+  createdAt: { type: Date, default: Date.now },
 });
 
 conversationSchema.pre('save', function (): void {
@@ -97,7 +97,7 @@ conversationSchema.statics.findConversation = async function ({
       {
         $match: {
           $expr: {
-            $eq: ['$memberIds', members.sort()],
+            $eq: ['$memberIds', [...members, meId].sort()],
           },
         },
       },
@@ -178,15 +178,54 @@ conversationSchema.statics.findConversation = async function ({
 
 conversationSchema.statics.findConversations = async function ({
   meId,
+  hasMessage = false,
 }: {
   meId: string;
+  hasMessage?: boolean;
 }): Promise<Array<IConversation>> {
+  const match = hasMessage
+    ? [
+        {
+          $lookup: {
+            from: 'messages',
+            localField: 'conversation',
+            foreignField: 'conversation',
+            as: 'messages',
+          },
+        },
+        {
+          $match: {
+            $expr: {
+              $ne: [{ $size: '$messages' }, 0],
+            },
+          },
+        },
+      ]
+    : [
+        {
+          $lookup: {
+            from: 'messages',
+            localField: 'conversation',
+            foreignField: 'conversation',
+            as: 'messages',
+          },
+        },
+        {
+          $match: {
+            $expr: {
+              $eq: [{ $size: '$messages' }, 0],
+            },
+          },
+        },
+      ];
+
   const conversations = await ParticipantModel.aggregate([
     {
       $match: {
         user: meId,
       },
     },
+    ...match,
     {
       $lookup: {
         from: 'participants',
@@ -275,7 +314,7 @@ conversationSchema.statics.createConversation = async function ({
 }: {
   meId: string;
   name?: string;
-  socketIO: Server;
+  socketIO?: Server;
   userIds: Array<string>;
 }): Promise<IConversation> {
   if (!userIds.length) throw new CustomError(Errors.NO_PARAMS);
@@ -290,7 +329,6 @@ conversationSchema.statics.createConversation = async function ({
     _id: new Types.ObjectId().toString(),
     creator: meId,
     name,
-    createdAt: new Date(),
   })) as IConversation;
 
   await Promise.all(
@@ -300,11 +338,13 @@ conversationSchema.statics.createConversation = async function ({
         conversation: conv.id,
         createdAt: new Date(),
       });
-      socketIO.in(user).socketsJoin(conv.id);
-      return socketIO.to(user).emit('add_new_conversation', {
-        creatorId: meId,
-        conversationId: conv.id,
-      });
+      if (socketIO) {
+        socketIO.in(user).socketsJoin(conv.id);
+        socketIO.to(user).emit('add_new_conversation', {
+          creatorId: meId,
+          conversationId: conv.id,
+        });
+      }
     })
   );
 

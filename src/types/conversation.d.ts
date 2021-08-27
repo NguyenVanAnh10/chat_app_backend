@@ -10,14 +10,20 @@ interface IConversation {
 
 interface IConversationModel extends Model<IConversation> {
   existsConversation(userIds: Array<string>): Promise<boolean>;
-  findConversations({ meId }: { meId: string }): Promise<Array<IConversation>>;
+  findConversations({
+    meId,
+    hasMessage,
+  }: {
+    meId: string;
+    hasMessage?: boolean;
+  }): Promise<Array<IConversation>>;
   findConversation(query: { meId: string; conversationId?: string }): Promise<IConversation>;
   findConversation(query: { meId: string; members?: Array<string> }): Promise<IConversation>;
   createConversation(query: {
     meId: string;
-    name?: string;
-    socketIO: Server;
     userIds: Array<string>;
+    name?: string;
+    socketIO?: Server;
   }): Promise<IConversation>;
   updateConversation(
     query: { meId: string; conversationId: string },

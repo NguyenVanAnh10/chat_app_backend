@@ -29,7 +29,7 @@ const chat = (httpServer: http.Server): socketIO.Server => {
         if (!conversationId && addresseeIds.length) {
           conversation = await ConversationModel.findConversation({
             meId: callerId,
-            members: [...addresseeIds, callerId],
+            members: [...addresseeIds],
           });
           if (!conversation.id) {
             conversation = await ConversationModel.createConversation({

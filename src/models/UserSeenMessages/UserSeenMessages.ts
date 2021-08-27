@@ -19,7 +19,7 @@ const userSeenMessageSchema = new Schema<IUserSeenMessage>({
     required: true,
     ref: 'users',
   },
-  createdAt: { type: Date, default: new Date() },
+  createdAt: { type: Date, default: Date.now },
 });
 userSeenMessageSchema.pre('save', function (): void {
   if (!this._id) {
