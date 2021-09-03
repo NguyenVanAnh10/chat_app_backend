@@ -97,7 +97,7 @@ conversationSchema.statics.findConversation = async function ({
       {
         $match: {
           $expr: {
-            $eq: ['$memberIds', [...members, meId].sort()],
+            $eq: ['$memberIds', (members.includes(meId) ? members : [...members, meId]).sort()],
           },
         },
       },
@@ -319,10 +319,8 @@ conversationSchema.statics.createConversation = async function ({
 }): Promise<IConversation> {
   if (!userIds.length) throw new CustomError(Errors.NO_PARAMS);
 
-  const existConversation = await (this as IConversationModel).existsConversation([
-    meId,
-    ...userIds,
-  ]);
+  const memberIds = userIds.includes(meId) ? userIds : [meId, ...userIds];
+  const existConversation = await (this as IConversationModel).existsConversation(memberIds);
   if (existConversation) throw new CustomError(Errors.CONVERSATION_ALREADY_EXISTS);
 
   const conv = (await (this as IConversationModel).create({
@@ -332,7 +330,7 @@ conversationSchema.statics.createConversation = async function ({
   })) as IConversation;
 
   await Promise.all(
-    [meId, ...userIds].map(async user => {
+    memberIds.map(async user => {
       await ParticipantModel.create({
         user,
         conversation: conv.id,
