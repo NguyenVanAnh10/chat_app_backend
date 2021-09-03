@@ -23,23 +23,23 @@ const chat = (httpServer: http.Server): socketIO.Server => {
       }
     });
 
-    socket.on('call_to', async ({ signal, callerId, conversationId, addresseeIds = [] }) => {
+    socket.on('call_to', async ({ signal, callerId, conversationId, peerIds = [], peerId }) => {
       try {
         let conversation = {} as IConversation;
-        if (!conversationId && addresseeIds.length) {
+        if (!conversationId && peerIds.length) {
           conversation = await ConversationModel.findConversation({
             meId: callerId,
-            members: [...addresseeIds],
+            members: peerIds,
           });
           if (!conversation.id) {
             conversation = await ConversationModel.createConversation({
               meId: callerId,
-              userIds: addresseeIds,
+              userIds: peerIds,
               socketIO: io,
             });
           }
         }
-        socket.to(conversationId || conversation.id).emit('have_a_coming_call', {
+        socket.to(peerId).emit('have_a_coming_call', {
           conversationId: conversationId || conversation.id,
           signal,
           callerId,
@@ -49,12 +49,12 @@ const chat = (httpServer: http.Server): socketIO.Server => {
       }
     });
 
-    socket.on('answer_the_call', ({ signal, conversationId }) => {
-      socket.to(conversationId).emit('accept_the_call', { signal });
+    socket.on('share_signal', ({ signal, peerId, meId, callerId }) => {
+      socket.to(peerId).emit('receive_signal', { peerId: meId, signal, callerId });
     });
 
-    socket.on('decline_the_incoming_call', ({ callerId, conversationId }) => {
-      io.to(conversationId).emit('decline_the_incoming_call', { callerId, conversationId });
+    socket.on('decline_the_incoming_call', ({ callerId, conversationId, peerId }) => {
+      io.to(conversationId).emit('decline_the_incoming_call', { callerId, conversationId, peerId });
     });
 
     socket.on('end_call', ({ userId, conversationId }) => {
